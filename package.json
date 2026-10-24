@@ -1,0 +1,52 @@
+{
+  "name": "@local/retro-dock",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Instrument dials for DeepSeek Harness: live tokens/sec, context pressure and cache hit, docked above the composer or in the stats bar.",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "dshhub": {
+    "schemaVersion": 1,
+    "displayName": "Composer Instrument Dials",
+    "summary": "Two instrument dials for the composer: live tokens per second, context pressure and cache hit.",
+    "categories": [
+      "Web UI"
+    ],
+    "surfaces": [
+      "web"
+    ]
+  },
+  "license": "MIT",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "instrument",
+    "gauge",
+    "tokens-per-second"
+  ]
+}

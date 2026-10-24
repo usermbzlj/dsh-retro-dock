@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Composer Instrument Dials",
+    "description": "Live tokens per second, context pressure and cache hit, docked above the composer or in the stats bar."
+  }
+}

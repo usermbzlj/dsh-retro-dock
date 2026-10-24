@@ -1,0 +1,3 @@
+- insert:
+    - id: retro-dock
+      name: '@local/retro-dock'
