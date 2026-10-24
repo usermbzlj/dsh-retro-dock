@@ -6,6 +6,12 @@ DeepSeek Harness 输入区仪表盘插件：把「实时生成速度 / 上下文
 
 ## 下载与安装
 
+**DSH 官方安装命令**
+
+```bash
+npx @deepseek-ai/dsh plugin --profile web add github:usermbzlj/dsh-retro-dock
+```
+
 **方式一：直接下载 tarball**
 
 [v1.0.0 tarball](https://github.com/usermbzlj/dsh-retro-dock/releases/download/v1.0.0/local-retro-dock-1.0.0.tgz)
