@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Retro Dock 输入区仪表",
-    "description": "四种仪表样式显示实时速度、上下文占用与会话缓存命中，支持明暗主题、停靠位置、密度与设置面板。"
+    "title": "Retro Dock 双表盘仪表",
+    "description": "经典双表盘：实时速度、上下文占用与会话缓存命中，测量经宿主 sessionStats 校准，设置集中在宿主设置页。"
   }
 }

@@ -1,7 +1,7 @@
 # Measurement contract
 
 Retro Dock is an instrument, so every number needs a stated method. This file is
-the contract; the UI is the display. The four visual styles share all of it.
+the contract; the UI is the display. The 1.2.0 classic dual dial uses all of it.
 
 | Reading | Source | Kind | Range |
 | --- | --- | --- | --- |
@@ -111,23 +111,22 @@ Calibration state is explicit:
 - The body `MutationObserver` is attached only when the chat stream is
   unavailable, and is detached as soon as the stream becomes available.
 - Density uses a `ResizeObserver` per gauge, not a per-frame width poll.
-- The settings page and popover have no timers beyond the preference store.
+- The settings page has no timers beyond the preference store.
 
 ## Verification
 
-- `npm test` — 43 tests:
+- `npm test` — 42 tests:
   - measurement pure functions and host-compatible HIT formatting;
   - incremental stream counting, rewind/reset behaviour;
   - 1.2 s window, calibration deltas, bounds, generation/session resets;
   - preference validation and legacy migration;
   - i18n resolution and interpolation;
-  - SSR rendering of all four styles (readouts, density, warning, aria);
-  - jsdom integration: mount, stream update, settings popover, style change,
-    Escape, placement toggle, preference persistence;
+  - SSR rendering of the classic gauge (readouts, density, warning, aria);
+  - jsdom integration: mount, stream update, placement toggle and preference
+    persistence;
   - the built `client.js` ModuleLoader contract.
 - `npm run shots` renders the same components in Chromium and writes
-  `docs/styles-*.png`, `docs/settings-*.png`, `docs/popover-*.png` and per-style
-  cards.
+  `docs/classic-*.jpg`, `docs/settings-*.jpg`.
 - **Not yet verified**: a live-session trace of `window.__retroDock` against the
   host's `sessionStats`. Until that exists, the calibration accuracy is
   unmeasured, not “known good”.

@@ -409,11 +409,11 @@ export const SETTINGS_CSS = String.raw`
   color: var(--dsw-alias-label-tertiary);
 }
 
-.rg-settings-page .rg-root {
+.rg-settings-page .rg-gauge {
   margin: 0;
 }
 
-.rg-settings-page .rg-root[data-static="1"] {
+.rg-settings-page .rg-gauge[data-static="1"] {
   transform: none;
 }
 
@@ -434,19 +434,20 @@ export const SETTINGS_CSS = String.raw`
   color: var(--dsw-alias-label-tertiary);
 }
 
-.rg-preview-stage .rg-root[data-density="full"] {
-  --rg-dial: 56px;
+.rg-preview-stage .rg-gauge[data-density="full"] {
+  --rg-size: 56px;
 }
 
-.rg-preview-stage .rg-root[data-density="full"] .rg-value {
+.rg-preview-stage .rg-gauge[data-density="full"] .rg-value {
   font-size: 20px;
 }
 
-.rg-preview-stage .rg-root[data-placement="dock"] {
-  margin: 0;
+/* the classic instrument is dark-only; keep preview stages dark in both themes */
+.rg-preview-stage {
+  background: #151517;
 }
 
-.rg-preview-stage .rg-term {
-  --rg-term-w: 104px;
+.rg-preview-stage .rg-gauge[data-variant="dock"] {
+  margin: 0;
 }
 `;

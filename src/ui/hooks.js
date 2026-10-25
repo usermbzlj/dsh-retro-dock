@@ -61,8 +61,10 @@ export const useDensity = ({ active, rootRef, variant, preference }) => {
 
     const compute = () => {
       const width = parent.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : 0);
-      const full = variant === 'input' ? 760 : 520;
-      const compact = variant === 'input' ? 540 : 380;
+      // The pre-1.1.0 thresholds: the dock only has full/minimal; the composer
+      // slot has all three densities.
+      const full = variant === 'input' ? 860 : 560;
+      const compact = variant === 'input' ? 620 : Number.POSITIVE_INFINITY;
       setDensity(width >= full ? 'full' : width >= compact ? 'compact' : 'minimal');
     };
 

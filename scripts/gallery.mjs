@@ -1,12 +1,13 @@
 /** Build the static style gallery used for docs screenshots. */
 
 import { build } from 'esbuild';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const docs = path.join(root, 'docs');
+const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
 await mkdir(docs, { recursive: true });
 
 await build({
@@ -22,6 +23,7 @@ await build({
   minify: true,
   define: {
     'process.env.NODE_ENV': '"production"',
+    __RG_VERSION__: JSON.stringify(pkg.version),
   },
 });
 

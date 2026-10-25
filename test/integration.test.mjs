@@ -4,10 +4,9 @@ import { JSDOM } from 'jsdom';
 
 /**
  * Integration test: a real React root, a real jsdom document, and the plugin's
- * apply() with a mocked slot host. Catches hook-order, portal and subscription
- * mistakes that a server render cannot.
+ * apply() with a mocked slot host.
  */
-test('the plugin mounts, toggles placement and edits prefs through the popover', async () => {
+test('the classic gauge mounts, streams and toggles placement', async () => {
   const dom = new JSDOM('<!doctype html><html><head></head><body><div id="host"></div></body></html>', {
     url: 'http://localhost/',
     pretendToBeVisual: true,
@@ -17,7 +16,6 @@ test('the plugin mounts, toggles placement and edits prefs through the popover',
     window: globalThis.window,
     document: globalThis.document,
     MutationObserver: globalThis.MutationObserver,
-    HTMLElement: globalThis.HTMLElement,
     localStorage: globalThis.localStorage,
     requestAnimationFrame: globalThis.requestAnimationFrame,
     cancelAnimationFrame: globalThis.cancelAnimationFrame,
@@ -27,7 +25,6 @@ test('the plugin mounts, toggles placement and edits prefs through the popover',
   globalThis.window = window;
   globalThis.document = window.document;
   globalThis.MutationObserver = window.MutationObserver;
-  globalThis.HTMLElement = window.HTMLElement;
   globalThis.localStorage = window.localStorage;
   globalThis.requestAnimationFrame = window.requestAnimationFrame.bind(window);
   globalThis.cancelAnimationFrame = window.cancelAnimationFrame.bind(window);
@@ -104,11 +101,12 @@ test('the plugin mounts, toggles placement and edits prefs through the popover',
     root.render(React.createElement(Dock, { useProjection, useChat }));
   });
 
-  let gauge = container.querySelector('.rg-root');
-  assert.ok(gauge, 'the dock gauge should render');
+  let gauge = container.querySelector('.rg-gauge');
+  assert.ok(gauge, 'the classic gauge should render');
   assert.equal(gauge.dataset.source, 'projection');
-  assert.match(container.textContent, /65%/);
+  assert.match(container.textContent, /65/);
   assert.match(container.textContent, /99\.9%/);
+  assert.equal(container.querySelector('.rg-gear'), null);
 
   await act(async () => {
     chatState = {
@@ -125,42 +123,21 @@ test('the plugin mounts, toggles placement and edits prefs through the popover',
     await new Promise((resolve) => setTimeout(resolve, 400));
   });
 
-  gauge = container.querySelector('.rg-root');
+  gauge = container.querySelector('.rg-gauge');
   assert.equal(gauge.dataset.live, '1');
-  const readout = container.querySelector('.rg-value').textContent;
-  assert.match(readout, /≈[1-9]/);
-
-  const gear = container.querySelector('.rg-gear');
-  await act(async () => {
-    gear.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-  });
-  const popover = window.document.querySelector('.rg-settings-popover');
-  assert.ok(popover, 'the settings popover should portal to body');
-  assert.equal(popover.getAttribute('role'), 'dialog');
-
-  const styleButtons = popover.querySelectorAll('.rg-style-tile');
-  assert.equal(styleButtons.length, 4);
-  await act(async () => {
-    styleButtons[3].dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-  });
-  assert.equal(prefs.getSnapshot().style, 'terminal');
-  assert.equal(container.querySelector('.rg-root').dataset.style, 'terminal');
+  assert.match(container.querySelector('.rg-value').textContent, /≈[1-9]/);
 
   await act(async () => {
-    window.document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    gauge.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   });
-  assert.equal(window.document.querySelector('.rg-settings-popover'), null);
-
-  await act(async () => {
-    container.querySelector('.rg-toggle').dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
-  });
-  assert.equal(container.querySelector('.rg-root'), null);
+  assert.equal(container.querySelector('.rg-gauge'), null);
   assert.equal(prefs.getSnapshot().placement, 'input');
+  assert.equal(registered.has('settings.section'), true);
 
   await act(async () => {
     prefs.set({ placement: 'dock' });
   });
-  assert.ok(container.querySelector('.rg-root'));
+  assert.ok(container.querySelector('.rg-gauge'));
 
   await act(async () => {
     root.unmount();
@@ -171,7 +148,6 @@ test('the plugin mounts, toggles placement and edits prefs through the popover',
   globalThis.window = previous.window;
   globalThis.document = previous.document;
   globalThis.MutationObserver = previous.MutationObserver;
-  globalThis.HTMLElement = previous.HTMLElement;
   globalThis.localStorage = previous.localStorage;
   globalThis.requestAnimationFrame = previous.requestAnimationFrame;
   globalThis.cancelAnimationFrame = previous.cancelAnimationFrame;

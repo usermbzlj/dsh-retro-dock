@@ -3,11 +3,11 @@
 import { R } from '../runtime.js';
 import { prefs } from '../prefs.js';
 import { engine } from '../engine.js';
-import { STYLES, SCALES, WARN_LEVELS } from '../themes.js';
+import { SCALES, WARN_LEVELS } from '../themes.js';
 import { createT } from '../i18n.js';
 import { usePrefs, useEngineVersion, useLang } from './hooks.js';
-import { StyleIcon, CloseIcon } from './icons.js';
-import { StaticGauge } from './preview.js';
+import { CloseIcon } from './icons.js';
+import { ClassicPreview } from './classic.js';
 import { VERSION } from '../version.js';
 
 const h = (...args) => R.h(...args);
@@ -28,19 +28,6 @@ const Field = ({ label, hint, children }) => h('div', { className: 'rg-field' },
     h('span', null, label),
     hint ? h('span', { className: 'rg-field-hint' }, hint) : null),
   children);
-
-const StylePicker = ({ value, onChange, t, detailed }) => h('div', { className: 'rg-style-grid' },
-  STYLES.map((style) => h('button', {
-    key: style.id,
-    type: 'button',
-    className: 'rg-style-tile',
-    'aria-pressed': String(value === style.id),
-    title: t(style.descriptionKey),
-    onClick: () => onChange(style.id),
-  },
-  h(StyleIcon, { style: style.id }),
-  h('span', { className: 'rg-style-name' }, t(style.labelKey)),
-  detailed ? h('span', { className: 'rg-style-desc' }, t(style.descriptionKey)) : null)));
 
 const Switch = ({ checked, onChange, label }) => h('div', { className: 'rg-switch-row' },
   h('span', { className: 'rg-switch-label' }, label),
@@ -74,13 +61,6 @@ export const SettingsControls = ({ t, detailed = false }) => {
   const set = (patch) => prefs.set(patch);
 
   return h('div', { className: 'rg-controls' },
-    h(Field, { label: t('styleTitle') },
-      h(StylePicker, {
-        value: snapshot.style,
-        onChange: (style) => set({ style }),
-        t,
-        detailed,
-      })),
     h(Field, { label: t('placementTitle') },
       h(Seg, {
         value: snapshot.placement,
@@ -258,11 +238,11 @@ export const SettingsSection = () => {
           h('span', { className: 'rg-sep' }, '·'),
           h('span', null, t('densityFull'))),
         h('div', { className: 'rg-preview-stage' },
-          h(StaticGauge, { style: snapshot.style, density: 'full', placement: 'dock', t })),
+          h(ClassicPreview, { density: 'full', placement: 'dock', t })),
         h('div', { className: 'rg-preview-label' },
           h('span', null, t('densityMinimal'))),
         h('div', { className: 'rg-preview-stage' },
-          h(StaticGauge, { style: snapshot.style, density: 'minimal', placement: 'dock', t })),
+          h(ClassicPreview, { density: 'minimal', placement: 'dock', t })),
         h('p', { className: 'rg-preview-caption' }, t('previewHint')),
         h('p', { className: 'rg-preview-caption' }, t('version', { version: VERSION })))),
     h('p', { className: 'rg-notice' }, t('notice')));

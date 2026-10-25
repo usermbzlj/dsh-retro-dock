@@ -23,8 +23,7 @@ import {
   useDensity,
   useMeterLoop,
 } from './hooks.js';
-import { GaugeView } from './view.js';
-import { SettingsPopover } from './settings.js';
+import { ClassicGauge } from './classic.js';
 import { readContextPressure, readCacheHit } from './read-dom.js';
 
 const h = (...args) => R.h(...args);
@@ -49,15 +48,8 @@ export const createGauge = (variant) => function GaugeSlot(props) {
   const active = snapshot.placement === variant;
 
   const rootRef = R.useRef(null);
-  const gearRef = R.useRef(null);
-  const [open, setOpen] = R.useState(false);
   const [readout, setReadout] = R.useState({ tps: 0, live: false });
   const [dom, setDom] = R.useState({ ctx: null, hit: null });
-  const [touch] = R.useState(() => (
-    typeof window !== 'undefined'
-    && typeof window.matchMedia === 'function'
-    && window.matchMedia('(hover: none)').matches
-  ));
 
   const density = useDensity({ active, rootRef, variant, preference: snapshot.density });
 
@@ -151,7 +143,6 @@ export const createGauge = (variant) => function GaugeSlot(props) {
         : t('notCalibrated');
 
   const vm = {
-    style: snapshot.style,
     density,
     placement: variant,
     live: readout.live,
@@ -170,29 +161,14 @@ export const createGauge = (variant) => function GaugeSlot(props) {
     source,
     sourceText,
     calibrationText,
-    touch,
-    position: 0,
-    over: 0,
+    scale: snapshot.scale,
     revision,
   };
 
-  return h(R.React.Fragment, null,
-    h(GaugeView, {
-      vm,
-      t,
-      rootRef,
-      gearRef,
-      onToggle: () => {
-        setOpen(false);
-        prefs.set({ placement: variant === 'dock' ? 'input' : 'dock' });
-      },
-      onOpenSettings: () => setOpen((value) => !value),
-      settingsOpen: open,
-    }),
-    h(SettingsPopover, {
-      anchorRef: gearRef,
-      open,
-      onClose: () => setOpen(false),
-      t,
-    }));
+  return h(ClassicGauge, {
+    vm,
+    t,
+    rootRef,
+    onToggle: () => prefs.set({ placement: variant === 'dock' ? 'input' : 'dock' }),
+  });
 };

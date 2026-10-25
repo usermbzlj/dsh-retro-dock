@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.2.0 — 2026-10-26
+
+### Changed
+
+- Restored the pre-1.1.0 **classic dual-dial** visual as the only shipped gauge: 240° speed dial, four tick marks, tapered needle, 38px CTX/HIT dual rings, and the original readout rows.
+- Removed the four-style switcher, the gauge gear/popover and the four-style galleries from the shipped UI. The four-style code is no longer imported by the bundle and remains recoverable from the `v1.1.0` tag and GitHub Release.
+- Settings now live only in the host `settings.section`: placement, density, full scale, CTX warning threshold, sub-readout switch, language and calibration reset.
+- Restored the original density behaviour: composer full / compact / minimal at 860 / 620; stats bar full / minimal at 560. Dial sizes 56 / 50 / 44 and 42 / 38.
+- The classic gauge runs on the 1.1.0 measurement engine; the arc and needle are driven by `--rg-p`, ticks are scale-aware, and overspeed keeps the cyan halo/color shift.
+- Updated README, README.en, MEASUREMENT, package metadata and screenshots (`docs/classic-dark.jpg`, `docs/settings-*.jpg`).
+
+### Kept
+
+- Incremental stream counting, delta calibration with pending/available/unavailable states, host-compatible HIT formatting, idle rAF stop, observer detach, ResizeObserver density, `dsh-retro-dock:prefs:v2` migration and the 42-test suite.
+
+### Verification
+
+- 42/42 tests pass; the classic gauge and settings page render in Chromium. A real-session calibration trace is still pending.
+
 ## 1.1.0 — 2026-10-26
 
 视觉、设置与测量核心的一次完整升级。旧的 `1.0.0` 包只有单一样式，测量与文档也停留在初版。
