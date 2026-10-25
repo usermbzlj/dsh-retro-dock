@@ -105,7 +105,10 @@ Calibration state is explicit:
 
 ## Performance model
 
-- Stream counting is incremental (O(delta)).
+- Stream counting is incremental (O(delta)). The needle spring state is
+  module-scoped and survives slot remounts; the last `--rg-p` value is applied
+  in a layout effect before paint, so a host re-render does not restart the
+  pointer at 0.
 - The rAF loop drives CSS variables (`--rg-p`, `--rg-over`) and stops once the
   needle settles and no token has arrived for 2.4 s; React only receives a
   rounded readout at about 8 Hz. When the loop resumes, the meter clock is

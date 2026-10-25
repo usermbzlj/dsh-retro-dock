@@ -22,6 +22,7 @@ import {
   useLang,
   useDensity,
   useMeterLoop,
+  getMeterReadout,
 } from './hooks.js';
 import { ClassicGauge } from './classic.js';
 import { readContextPressure, readCacheHit } from './read-dom.js';
@@ -48,7 +49,7 @@ export const createGauge = (variant) => function GaugeSlot(props) {
   const active = snapshot.placement === variant;
 
   const rootRef = R.useRef(null);
-  const [readout, setReadout] = R.useState({ tps: 0, live: false });
+  const [readout, setReadout] = R.useState(getMeterReadout);
   const [dom, setDom] = R.useState({ ctx: null, hit: null });
 
   const density = useDensity({ active, rootRef, variant, preference: snapshot.density });

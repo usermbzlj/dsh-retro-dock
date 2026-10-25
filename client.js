@@ -1650,24 +1650,36 @@
     }, [active, variant, preference, rootRef]);
     return density;
   };
+  var VIEW = {
+    needle: 0,
+    velocity: 0,
+    over: 0,
+    lastEmit: 0,
+    lastRounded: -1,
+    lastLive: false,
+    readout: { tps: 0, live: false }
+  };
+  var getMeterReadout = () => ({ ...VIEW.readout });
   var useMeterLoop = ({ active, rootRef, scale, onReadout }) => {
     const scaleRef = R.useRef(scale);
     const readoutRef = R.useRef(onReadout);
     scaleRef.current = scale;
     readoutRef.current = onReadout;
-    R.useEffect(() => {
+    R.useLayoutEffect(() => {
       if (!active || typeof window === "undefined") return void 0;
       const element = rootRef.current;
       if (!element) return void 0;
       const reduced = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       let raf = 0;
       let last = now();
-      let needle = 0;
-      let velocity = 0;
-      let over = 0;
-      let lastEmit = 0;
-      let lastRounded = -1;
-      let lastLive = false;
+      let needle = VIEW.needle;
+      let velocity = VIEW.velocity;
+      let over = VIEW.over;
+      let lastEmit = VIEW.lastEmit;
+      let lastRounded = VIEW.lastRounded;
+      let lastLive = VIEW.lastLive;
+      element.style.setProperty("--rg-p", needle.toFixed(2));
+      element.style.setProperty("--rg-over", over.toFixed(3));
       const frame = () => {
         const time = now();
         const dt = clamp(time - last, 0, 50) / 16.667;
@@ -1696,6 +1708,12 @@
         }
         element.style.setProperty("--rg-p", needle.toFixed(2));
         element.style.setProperty("--rg-over", over.toFixed(3));
+        VIEW.needle = needle;
+        VIEW.velocity = velocity;
+        VIEW.over = over;
+        VIEW.lastEmit = lastEmit;
+        VIEW.lastRounded = lastRounded;
+        VIEW.lastLive = lastLive;
         if (typeof window !== "undefined" && window.__retroDock && Array.isArray(window.__retroDock.trace)) {
           const trace = window.__retroDock.trace;
           trace.push({
@@ -1714,6 +1732,7 @@
           if (rounded !== lastRounded || live !== lastLive) {
             lastRounded = rounded;
             lastLive = live;
+            VIEW.readout = { tps: rounded, live };
             readoutRef.current({ tps: rounded, live });
           }
         }
@@ -2005,7 +2024,7 @@
     const t = R.useMemo(() => createT(lang), [lang]);
     const active = snapshot.placement === variant;
     const rootRef = R.useRef(null);
-    const [readout, setReadout] = R.useState({ tps: 0, live: false });
+    const [readout, setReadout] = R.useState(getMeterReadout);
     const [dom, setDom] = R.useState({ ctx: null, hit: null });
     const density = useDensity({ active, rootRef, variant, preference: snapshot.density });
     const projection = typeof props.useProjection === "function" ? props.useProjection : null;

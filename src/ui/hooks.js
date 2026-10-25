@@ -84,10 +84,26 @@ export const useDensity = ({ active, rootRef, variant, preference }) => {
   return density;
 };
 
+const VIEW = {
+  needle: 0,
+  velocity: 0,
+  over: 0,
+  lastEmit: 0,
+  lastRounded: -1,
+  lastLive: false,
+  readout: { tps: 0, live: false },
+};
+
+/** Last rounded readout, used to avoid a 0 flash when a slot remounts. */
+export const getMeterReadout = () => ({ ...VIEW.readout });
+
 /**
  * Drive the needle/arc CSS variables from the engine at up to 60 fps, but stop
  * the loop as soon as the needle settles and no tokens have arrived for a while.
  * React only sees a rounded readout at ~8 fps.
+ *
+ * The spring state lives at module scope so a host remount of the slot does not
+ * restart the needle at 0 and make it jump.
  *
  * @param {{
  *   active: boolean,
@@ -102,7 +118,7 @@ export const useMeterLoop = ({ active, rootRef, scale, onReadout }) => {
   scaleRef.current = scale;
   readoutRef.current = onReadout;
 
-  R.useEffect(() => {
+  R.useLayoutEffect(() => {
     if (!active || typeof window === 'undefined') return undefined;
     const element = rootRef.current;
     if (!element) return undefined;
@@ -112,12 +128,16 @@ export const useMeterLoop = ({ active, rootRef, scale, onReadout }) => {
 
     let raf = 0;
     let last = now();
-    let needle = 0;
-    let velocity = 0;
-    let over = 0;
-    let lastEmit = 0;
-    let lastRounded = -1;
-    let lastLive = false;
+    let needle = VIEW.needle;
+    let velocity = VIEW.velocity;
+    let over = VIEW.over;
+    let lastEmit = VIEW.lastEmit;
+    let lastRounded = VIEW.lastRounded;
+    let lastLive = VIEW.lastLive;
+
+    // Show the last needle position immediately; the first frame only nudges it.
+    element.style.setProperty('--rg-p', needle.toFixed(2));
+    element.style.setProperty('--rg-over', over.toFixed(3));
 
     const frame = () => {
       const time = now();
@@ -149,6 +169,12 @@ export const useMeterLoop = ({ active, rootRef, scale, onReadout }) => {
 
       element.style.setProperty('--rg-p', needle.toFixed(2));
       element.style.setProperty('--rg-over', over.toFixed(3));
+      VIEW.needle = needle;
+      VIEW.velocity = velocity;
+      VIEW.over = over;
+      VIEW.lastEmit = lastEmit;
+      VIEW.lastRounded = lastRounded;
+      VIEW.lastLive = lastLive;
 
       if (typeof window !== 'undefined' && window.__retroDock && Array.isArray(window.__retroDock.trace)) {
         const trace = window.__retroDock.trace;
@@ -169,6 +195,7 @@ export const useMeterLoop = ({ active, rootRef, scale, onReadout }) => {
         if (rounded !== lastRounded || live !== lastLive) {
           lastRounded = rounded;
           lastLive = live;
+          VIEW.readout = { tps: rounded, live };
           readoutRef.current({ tps: rounded, live });
         }
       }
