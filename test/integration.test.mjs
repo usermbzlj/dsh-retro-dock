@@ -137,6 +137,19 @@ test('the classic gauge mounts, streams and toggles placement', async () => {
   assert.ok(node.style.getPropertyValue('--rg-p'), 'React re-render must not clear the needle variable');
 
   await act(async () => {
+    projections.sessionStats = { decodeTokens: 0, decodeMs: 0 };
+    for (const listener of projectionListeners) listener();
+  });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  });
+  assert.equal(
+    container.querySelector('.rg-gauge').dataset.live,
+    '1',
+    'a stats-projection drop must not zero the live rate',
+  );
+
+  await act(async () => {
     gauge.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   });
   assert.equal(container.querySelector('.rg-gauge'), null);
