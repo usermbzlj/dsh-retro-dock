@@ -150,6 +150,32 @@ test('the classic gauge mounts, streams and toggles placement', async () => {
   );
 
   await act(async () => {
+    projections.tokenUsage = { cacheReadTokens: 980, uncachedInputTokens: 20, cacheWriteTokens: 0 };
+    for (const listener of projectionListeners) listener();
+  });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  });
+  assert.equal(
+    container.querySelector('.rg-gauge').dataset.live,
+    '1',
+    'a HIT sub-dial refresh must not zero the live rate',
+  );
+
+  await act(async () => {
+    chatState = { running: true, legacy: { partial: null, runningCalls: [] } };
+    for (const listener of chatListeners) listener();
+  });
+  await act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  });
+  assert.equal(
+    container.querySelector('.rg-gauge').dataset.live,
+    '1',
+    'clearing the partial between generations must not zero the live rate',
+  );
+
+  await act(async () => {
     gauge.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   });
   assert.equal(container.querySelector('.rg-gauge'), null);

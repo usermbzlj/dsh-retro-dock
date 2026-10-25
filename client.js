@@ -1092,7 +1092,6 @@
        */
       notePartial(blocks, at) {
         const result = counter.update(blocks);
-        if (result.reset) rate.resetGeneration();
         if (result.delta > 0) {
           rate.note(result.delta, at);
           markActivity(at);
@@ -1210,6 +1209,14 @@
       /** Start a new generation inside the same session (keep calibration). */
       resetGeneration() {
         rate.resetGeneration();
+        counter.reset();
+      },
+      /**
+       * The host cleared/replaced the stream partial. Clear the counter so the
+       * next generation is counted from zero, but leave the rate window alone so
+       * the needle decays smoothly instead of snapping to zero.
+       */
+      endGeneration() {
         counter.reset();
       },
       /** New session: drop samples, calibration and counter state. */
@@ -2050,7 +2057,7 @@
       const broken = partial !== null && partial !== void 0 && !Array.isArray(blocks);
       engine.setStream({ ok: true, broken });
       if (partial === null) {
-        engine.resetGeneration();
+        engine.endGeneration();
         return;
       }
       if (!broken && Array.isArray(blocks)) engine.notePartial(blocks, now());

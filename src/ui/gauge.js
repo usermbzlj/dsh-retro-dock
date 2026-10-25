@@ -83,10 +83,11 @@ export const createGauge = (variant) => function GaugeSlot(props) {
     const broken = partial !== null && partial !== undefined && !Array.isArray(blocks);
     engine.setStream({ ok: true, broken });
     if (partial === null) {
-      // The host clears the partial between generations. Reset the counter and
-      // the rate window here instead of letting the next generation count a
-      // giant delta against the previous one.
-      engine.resetGeneration();
+      // The host clears the partial between generations. Drop the counter so
+      // the next generation is not counted against the previous one, but keep
+      // the 1.2 s rate window so the main needle decays instead of snapping to
+      // zero when the CTX/HIT sub-dial refreshes at the step boundary.
+      engine.endGeneration();
       return;
     }
     if (!broken && Array.isArray(blocks)) engine.notePartial(blocks, now());

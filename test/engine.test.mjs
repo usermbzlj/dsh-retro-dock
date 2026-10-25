@@ -22,6 +22,7 @@ test('the engine counts stream deltas and resets on a new generation', () => {
   assert.equal(result.reset, true);
   assert.equal(result.delta, 0);
   assert.ok(Math.abs(result.total - 0.9) < 1e-9);
+  assert.ok(engine.sample(1040) > 0, 'a generation reset must keep the rate window');
 });
 
 test('calibration uses host token deltas and resets on a session switch', () => {

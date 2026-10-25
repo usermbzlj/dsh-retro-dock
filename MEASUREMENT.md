@@ -20,6 +20,9 @@ the contract; the UI is the display. The 1.2.0 classic dual dial uses all of it.
   decrease** restarts the count. A block rewrite or drop that still grows the
   generation is counted as a delta, so a transient host rewrite cannot make the
   needle drop to zero. This keeps a long generation O(delta) instead of O(n²).
+  A generation boundary clears the counter, not the 1.2 s rate window; the
+  window decays naturally, so a step-boundary CTX/HIT refresh does not zero the
+  main needle.
 - **Character weights**: **0.6 token/CJK character**, **0.3 token/ASCII letter**
   and digit, 0.06 for a space, 0.1 for newline/tab, 0.35 for other punctuation.
   These are documented estimates, not tokenizer output.
@@ -45,8 +48,8 @@ The host's durable `sessionStats` projection exposes `decodeTokens` and
    boundary**, not a stream reset: the factor is reset and the baseline is
    rebased, but the live rate window and the chat counter are kept. Otherwise a
    sub-dial/projection refresh would zero the main needle. A generation restart
-   keeps the learned factor; a real chat reset clears the counter via the
-   partial.
+   keeps the learned factor; a cleared partial resets only the counter, so the
+   rate window can decay smoothly instead of snapping to zero.
 5. Manual reset sets the factor to 1 and clears samples, but keeps the session.
 
 Comparing deltas (not a session average vs a single generation) keeps the factor

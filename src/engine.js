@@ -49,7 +49,10 @@ export const createEngine = (options = {}) => {
      */
     notePartial(blocks, at) {
       const result = counter.update(blocks);
-      if (result.reset) rate.resetGeneration();
+      // A new generation resets the counter (so it does not count the new text
+      // against the old one) but must not clear the live rate window: the
+      // window decays on its own, and a hard reset here made the needle drop to
+      // zero at every step/HIT refresh.
       if (result.delta > 0) {
         rate.note(result.delta, at);
         markActivity(at);
@@ -184,6 +187,15 @@ export const createEngine = (options = {}) => {
     /** Start a new generation inside the same session (keep calibration). */
     resetGeneration() {
       rate.resetGeneration();
+      counter.reset();
+    },
+
+    /**
+     * The host cleared/replaced the stream partial. Clear the counter so the
+     * next generation is counted from zero, but leave the rate window alone so
+     * the needle decays smoothly instead of snapping to zero.
+     */
+    endGeneration() {
       counter.reset();
     },
 
