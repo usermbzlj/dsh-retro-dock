@@ -1,21 +1,34 @@
 {
   "name": "@local/retro-dock",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
-  "description": "Instrument dials for DeepSeek Harness: live tokens/sec, context pressure and cache hit, docked above the composer or in the stats bar.",
+  "description": "Instrument dials for DeepSeek Harness: live tokens/sec, context pressure and cache hit, with four visual styles, light/dark themes and a settings panel.",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test",
+    "preview": "node scripts/gallery.mjs",
+    "shots": "node scripts/shots.mjs"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
     "./locale/*.json": "./locale/*.json",
-    "./icon": "./icon.svg"
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
   },
   "files": [
     "index.js",
     "client.js",
     "cordis.patch.yml",
     "locale/*.json",
-    "icon.svg"
+    "icon.svg",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md",
+    "MEASUREMENT.md",
+    "docs/styles-*.jpg",
+    "docs/settings-*.jpg"
   ],
   "dsh": {
     "bundle": {
@@ -27,19 +40,56 @@
       "inject": [
         "@deepseek-ai/dsh-client-ui-conversation"
       ]
+    },
+    "compatibility": {
+      "dsh": ">=0.2.0-rc.1 <0.3.0-0",
+      "dshReleases": {
+        "0.2.0-rc.1": "compatible",
+        "0.2.0-rc.2": "compatible",
+        "0.2.1-rc.1": "compatible",
+        "0.2.1-rc.2": "compatible",
+        "0.2.1-rc.3": "compatible"
+      }
     }
   },
   "dshhub": {
     "schemaVersion": 1,
-    "displayName": "Composer Instrument Dials",
-    "summary": "Two instrument dials for the composer: live tokens per second, context pressure and cache hit.",
+    "displayName": "Retro Dock — Composer Instrument Dials",
+    "summary": "Live tokens per second, context pressure and cache hit for the composer, in four instrument styles with light/dark themes and a settings panel.",
     "categories": [
-      "Web UI"
+      "Web UI",
+      "观测"
     ],
     "surfaces": [
       "web"
-    ]
+    ],
+    "capabilities": {
+      "provides": []
+    },
+    "compatibility": {
+      "dsh": ">=0.2.0-rc.1 <0.3.0-0",
+      "node": ">=20"
+    },
+    "permissions": {
+      "network": []
+    }
   },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-client-ui-conversation": ">=0.2.0-rc.1 <0.3.0-0"
+  },
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.2.0-rc.1 <0.3.0-0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/usermbzlj/dsh-retro-dock.git"
+  },
+  "homepage": "https://github.com/usermbzlj/dsh-retro-dock#readme",
+  "bugs": {
+    "url": "https://github.com/usermbzlj/dsh-retro-dock/issues"
+  },
+  "author": "usermbzlj",
   "license": "MIT",
   "keywords": [
     "dsh",
@@ -47,6 +97,15 @@
     "deepseek-harness",
     "instrument",
     "gauge",
-    "tokens-per-second"
-  ]
+    "tokens-per-second",
+    "theme",
+    "retro"
+  ],
+  "devDependencies": {
+    "esbuild": "^0.25.12",
+    "jsdom": "^26.1.0",
+    "playwright": "^1.64.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
 }

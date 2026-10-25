@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Composer Instrument Dials",
-    "description": "Live tokens per second, context pressure and cache hit, docked above the composer or in the stats bar."
+    "title": "Retro Dock composer instruments",
+    "description": "Live tokens per second, context pressure and session cache hit in four instrument styles, with light/dark themes, placement, density and a settings panel."
   }
 }
