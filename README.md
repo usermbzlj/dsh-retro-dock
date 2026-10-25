@@ -80,7 +80,7 @@ npm pack   # local-retro-dock-1.2.0.tgz
 ```bash
 npm install
 npm run build      # 把 src/ 打包成 client.js
-npm test           # 42 项测试
+npm test           # 44 项测试
 npm run preview    # 生成 docs/gallery.html 经典仪表画廊
 npm run shots      # 需要 Chromium：npx playwright install chromium
 ```
@@ -105,7 +105,7 @@ scripts/            build / gallery / screenshots
 
 ## 验证状态
 
-- 自动化：42/42 通过；经典仪表和设置页已在 Chromium 中渲染并截图（`docs/classic-dark.jpg`、`docs/settings-dark.jpg`）。
+- 自动化：44/44 通过；经典仪表和设置页已在 Chromium 中渲染并截图（`docs/classic-dark.jpg`、`docs/settings-dark.jpg`）。
 - 宿主实机：尚未采集真实会话 trace。刷新/重启后 tooltip 应显示 `数据源 投影` 和实际校准倍率；如果显示 `DOM 回退` 或长期 `校准待统计`，请反馈 tooltip 文案和宿主版本。
 
 ## 版本说明

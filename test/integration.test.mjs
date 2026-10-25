@@ -126,6 +126,15 @@ test('the classic gauge mounts, streams and toggles placement', async () => {
   gauge = container.querySelector('.rg-gauge');
   assert.equal(gauge.dataset.live, '1');
   assert.match(container.querySelector('.rg-value').textContent, /≈[1-9]/);
+  assert.ok(gauge.style.getPropertyValue('--rg-p'), 'the frame loop should set the needle variable');
+
+  const node = gauge;
+  await act(async () => {
+    projections.contextPressure = { projectedTokens: 720, contextWindow: 1000 };
+    for (const listener of projectionListeners) listener();
+  });
+  assert.equal(container.querySelector('.rg-gauge'), node, 'React must not replace the gauge root');
+  assert.ok(node.style.getPropertyValue('--rg-p'), 'React re-render must not clear the needle variable');
 
   await act(async () => {
     gauge.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));

@@ -20,7 +20,12 @@ const ensureStyles = () => {
   if (typeof document === 'undefined') return null;
   const selector = `style[data-plugin-css="${CSS_ID}"]`;
   const existing = document.querySelector(selector);
-  if (existing !== null) return existing;
+  if (existing !== null) {
+    // HMR can leave the previous theme's style element in place. Replace its
+    // text so a hot reload cannot pair new markup with stale CSS.
+    if (existing.textContent !== CSS) existing.textContent = CSS;
+    return existing;
+  }
   if (!document.head) return null;
   const style = document.createElement('style');
   style.dataset.plugin = PLUGIN_ID;
@@ -171,6 +176,8 @@ export const createPlugin = (React, ReactDOM) => {
         engine,
         prefs,
         dispose,
+        trace: [],
+        getTrace: () => window.__retroDock.trace.slice(-120),
         getState: () => engine.getState(),
       };
     }

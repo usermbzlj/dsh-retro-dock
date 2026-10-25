@@ -72,31 +72,13 @@ export const createStreamCounter = () => {
   let total = 0;
   let previous = [];
 
-  const rebuild = (blocks) => {
-    const next = [];
-    let sum = 0;
-    for (const block of blocks) {
-      const text = contentOf(block);
-      const count = countTokens(text);
-      next.push({ kind: block && block.kind, text, count });
-      sum += count;
-    }
-    previous = next;
-    total = sum;
-    return sum;
-  };
-
   return {
     update(value) {
       if (!Array.isArray(value)) {
         return { total, delta: 0, reset: true };
       }
-      if (value.length < previous.length) {
-        return { total: rebuild(value), delta: 0, reset: true };
-      }
 
-      let delta = 0;
-      let reset = false;
+      let nextTotal = 0;
       const next = [];
       for (let index = 0; index < value.length; index += 1) {
         const block = value[index];
@@ -105,39 +87,40 @@ export const createStreamCounter = () => {
         const prior = previous[index];
         if (prior === undefined) {
           const count = countTokens(text);
-          delta += count;
+          nextTotal += count;
           next.push({ kind, text, count });
           continue;
         }
         if (text === prior.text) {
+          nextTotal += prior.count;
           next.push(prior);
           continue;
         }
         if (text.startsWith(prior.text)) {
           const added = countTokens(text.slice(prior.text.length));
           const count = prior.count + added;
-          delta += added;
+          nextTotal += count;
           next.push({ kind, text, count });
           continue;
         }
-        // Rewritten block (stream rewind, conversion, or a replaced node):
-        // recount it and, if it lost tokens, restart the generation.
+        // Rewritten block (stream rewind, conversion, or a replaced node).
+        // Recount it, but only restart the generation when the running total
+        // actually went down; a rewrite that still grows the generation must
+        // not make the needle drop to zero.
         const count = countTokens(text);
-        if (count < prior.count) reset = true;
-        delta += count - prior.count;
+        nextTotal += count;
         next.push({ kind, text, count });
       }
 
-      if (reset) {
-        let sum = 0;
-        for (const item of next) sum += item.count;
+      if (nextTotal < total) {
         previous = next;
-        total = sum;
+        total = nextTotal;
         return { total, delta: 0, reset: true };
       }
 
+      const delta = nextTotal - total;
       previous = next;
-      total += delta;
+      total = nextTotal;
       return { total, delta, reset: false };
     },
     reset() {

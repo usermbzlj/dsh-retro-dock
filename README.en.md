@@ -68,7 +68,7 @@ The rate is an estimate plus calibration, not server-side token accounting. The 
 ```bash
 npm install
 npm run build      # bundles src/ into client.js
-npm test           # 42 tests
+npm test           # 44 tests
 npm run preview    # builds docs/gallery.html
 npm run shots      # needs Chromium: npx playwright install chromium
 ```
@@ -77,7 +77,7 @@ npm run shots      # needs Chromium: npx playwright install chromium
 
 ## Verification
 
-- 42/42 tests pass; the classic gauge and settings page are rendered in Chromium (`docs/classic-dark.jpg`, `docs/settings-dark.jpg`).
+- 44/44 tests pass; the classic gauge and settings page are rendered in Chromium (`docs/classic-dark.jpg`, `docs/settings-dark.jpg`).
 - A live-session trace has not been captured yet. After a refresh, the tooltip should show `Source projection` and a calibration factor; if it shows `DOM fallback` or stays at `Waiting for host stats`, please report the tooltip text and host version.
 
 ## Version note

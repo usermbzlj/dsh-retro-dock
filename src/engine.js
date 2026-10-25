@@ -204,6 +204,15 @@ export const createEngine = (options = {}) => {
       return rate.tick(at);
     },
 
+    /**
+     * Align the meter clock before resuming the display loop.
+     *
+     * @param {number} at
+     */
+    prime(at) {
+      rate.prime(at);
+    },
+
     /** @returns {{ factor: number, samples: number, available: boolean, status: string, lastAt: number }} */
     getCalibration() {
       const snapshot = rate.snapshot();

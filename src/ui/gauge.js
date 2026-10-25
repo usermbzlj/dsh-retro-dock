@@ -81,6 +81,13 @@ export const createGauge = (variant) => function GaugeSlot(props) {
     const blocks = partial && typeof partial === 'object' ? partial.blocks : undefined;
     const broken = partial !== null && partial !== undefined && !Array.isArray(blocks);
     engine.setStream({ ok: true, broken });
+    if (partial === null) {
+      // The host clears the partial between generations. Reset the counter and
+      // the rate window here instead of letting the next generation count a
+      // giant delta against the previous one.
+      engine.resetGeneration();
+      return;
+    }
     if (!broken && Array.isArray(blocks)) engine.notePartial(blocks, now());
   }, [active, partial, chat]);
 

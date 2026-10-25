@@ -121,7 +121,7 @@ export const useMeterLoop = ({ active, rootRef, scale, onReadout }) => {
 
     const frame = () => {
       const time = now();
-      const dt = clamp(time - last, 0, 60) / 16.667;
+      const dt = clamp(time - last, 0, 50) / 16.667;
       last = time;
       const tps = engine.sample(time);
       const full = scaleRef.current || 180;
@@ -150,6 +150,18 @@ export const useMeterLoop = ({ active, rootRef, scale, onReadout }) => {
       element.style.setProperty('--rg-p', needle.toFixed(2));
       element.style.setProperty('--rg-over', over.toFixed(3));
 
+      if (typeof window !== 'undefined' && window.__retroDock && Array.isArray(window.__retroDock.trace)) {
+        const trace = window.__retroDock.trace;
+        trace.push({
+          t: Math.round(time),
+          tps: Math.round(tps * 10) / 10,
+          target: Math.round(target * 10) / 10,
+          needle: Math.round(needle * 10) / 10,
+          over: Math.round(over * 100) / 100,
+        });
+        if (trace.length > 360) trace.splice(0, trace.length - 360);
+      }
+
       if (time - lastEmit > 120) {
         lastEmit = time;
         const rounded = Math.round(tps);
@@ -175,6 +187,7 @@ export const useMeterLoop = ({ active, rootRef, scale, onReadout }) => {
     const start = () => {
       if (raf) return;
       last = now();
+      engine.prime(last);
       raf = requestAnimationFrame(frame);
     };
 

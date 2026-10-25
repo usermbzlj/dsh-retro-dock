@@ -115,6 +115,8 @@
 .rg-needle-group {
   transform: rotate(calc(150deg + var(--rg-p, 0) * 2.4deg));
   transform-origin: 20px 20px;
+  transform-box: view-box;
+  will-change: transform;
 }
 
 .rg-needle {
@@ -903,6 +905,16 @@
         lastCalibratedAt = Number.isFinite(at) ? at : 0;
         return true;
       },
+      /**
+       * Align the tick clock without changing the smoothed value. Called when the
+       * rAF loop resumes after an idle stop so the first tick does not apply a
+       * huge dt and jump the needle.
+       *
+       * @param {number} at monotonic timestamp in ms.
+       */
+      prime(at) {
+        if (Number.isFinite(at)) lastTickAt = at;
+      },
       /** A new generation starts: keep session calibration, reset the window. */
       resetGeneration() {
         samples = [];
@@ -990,29 +1002,12 @@
   var createStreamCounter = () => {
     let total = 0;
     let previous = [];
-    const rebuild = (blocks) => {
-      const next = [];
-      let sum = 0;
-      for (const block of blocks) {
-        const text = contentOf(block);
-        const count = countTokens(text);
-        next.push({ kind: block && block.kind, text, count });
-        sum += count;
-      }
-      previous = next;
-      total = sum;
-      return sum;
-    };
     return {
       update(value) {
         if (!Array.isArray(value)) {
           return { total, delta: 0, reset: true };
         }
-        if (value.length < previous.length) {
-          return { total: rebuild(value), delta: 0, reset: true };
-        }
-        let delta = 0;
-        let reset = false;
+        let nextTotal = 0;
         const next = [];
         for (let index = 0; index < value.length; index += 1) {
           const block = value[index];
@@ -1021,35 +1016,34 @@
           const prior = previous[index];
           if (prior === void 0) {
             const count2 = countTokens(text);
-            delta += count2;
+            nextTotal += count2;
             next.push({ kind, text, count: count2 });
             continue;
           }
           if (text === prior.text) {
+            nextTotal += prior.count;
             next.push(prior);
             continue;
           }
           if (text.startsWith(prior.text)) {
             const added = countTokens(text.slice(prior.text.length));
             const count2 = prior.count + added;
-            delta += added;
+            nextTotal += count2;
             next.push({ kind, text, count: count2 });
             continue;
           }
           const count = countTokens(text);
-          if (count < prior.count) reset = true;
-          delta += count - prior.count;
+          nextTotal += count;
           next.push({ kind, text, count });
         }
-        if (reset) {
-          let sum = 0;
-          for (const item of next) sum += item.count;
+        if (nextTotal < total) {
           previous = next;
-          total = sum;
+          total = nextTotal;
           return { total, delta: 0, reset: true };
         }
+        const delta = nextTotal - total;
         previous = next;
-        total += delta;
+        total = nextTotal;
         return { total, delta, reset: false };
       },
       reset() {
@@ -1235,6 +1229,14 @@
        */
       sample(at) {
         return rate.tick(at);
+      },
+      /**
+       * Align the meter clock before resuming the display loop.
+       *
+       * @param {number} at
+       */
+      prime(at) {
+        rate.prime(at);
       },
       /** @returns {{ factor: number, samples: number, available: boolean, status: string, lastAt: number }} */
       getCalibration() {
@@ -1668,7 +1670,7 @@
       let lastLive = false;
       const frame = () => {
         const time = now();
-        const dt = clamp(time - last, 0, 60) / 16.667;
+        const dt = clamp(time - last, 0, 50) / 16.667;
         last = time;
         const tps = engine.sample(time);
         const full = scaleRef.current || 180;
@@ -1694,6 +1696,17 @@
         }
         element.style.setProperty("--rg-p", needle.toFixed(2));
         element.style.setProperty("--rg-over", over.toFixed(3));
+        if (typeof window !== "undefined" && window.__retroDock && Array.isArray(window.__retroDock.trace)) {
+          const trace = window.__retroDock.trace;
+          trace.push({
+            t: Math.round(time),
+            tps: Math.round(tps * 10) / 10,
+            target: Math.round(target * 10) / 10,
+            needle: Math.round(needle * 10) / 10,
+            over: Math.round(over * 100) / 100
+          });
+          if (trace.length > 360) trace.splice(0, trace.length - 360);
+        }
         if (time - lastEmit > 120) {
           lastEmit = time;
           const rounded = Math.round(tps);
@@ -1715,6 +1728,7 @@
       const start = () => {
         if (raf) return;
         last = now();
+        engine.prime(last);
         raf = requestAnimationFrame(frame);
       };
       start();
@@ -2017,6 +2031,10 @@
       const blocks = partial && typeof partial === "object" ? partial.blocks : void 0;
       const broken = partial !== null && partial !== void 0 && !Array.isArray(blocks);
       engine.setStream({ ok: true, broken });
+      if (partial === null) {
+        engine.resetGeneration();
+        return;
+      }
       if (!broken && Array.isArray(blocks)) engine.notePartial(blocks, now());
     }, [active, partial, chat]);
     R.useEffect(() => {
@@ -2282,7 +2300,10 @@
     if (typeof document === "undefined") return null;
     const selector = `style[data-plugin-css="${CSS_ID}"]`;
     const existing = document.querySelector(selector);
-    if (existing !== null) return existing;
+    if (existing !== null) {
+      if (existing.textContent !== CSS) existing.textContent = CSS;
+      return existing;
+    }
     if (!document.head) return null;
     const style = document.createElement("style");
     style.dataset.plugin = PLUGIN_ID;
@@ -2407,6 +2428,8 @@
           engine,
           prefs,
           dispose,
+          trace: [],
+          getTrace: () => window.__retroDock.trace.slice(-120),
           getState: () => engine.getState()
         };
       }

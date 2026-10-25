@@ -95,6 +95,17 @@ export const createRateMeter = (options = {}) => {
       return true;
     },
 
+    /**
+     * Align the tick clock without changing the smoothed value. Called when the
+     * rAF loop resumes after an idle stop so the first tick does not apply a
+     * huge dt and jump the needle.
+     *
+     * @param {number} at monotonic timestamp in ms.
+     */
+    prime(at) {
+      if (Number.isFinite(at)) lastTickAt = at;
+    },
+
     /** A new generation starts: keep session calibration, reset the window. */
     resetGeneration() {
       samples = [];

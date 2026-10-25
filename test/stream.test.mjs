@@ -43,6 +43,32 @@ test('incremental counter only counts the appended slice', () => {
   assert.ok(Math.abs(result.delta - countTokens('思考')) < 1e-9);
 });
 
+test('a rewrite that still grows the total does not restart the needle', () => {
+  const counter = createStreamCounter();
+  counter.update([
+    { kind: 'text', text: 'aaaa' },
+    { kind: 'text', text: 'bb' },
+  ]);
+  const result = counter.update([
+    { kind: 'text', text: 'aa' },
+    { kind: 'text', text: 'bbbbbb' },
+  ]);
+  assert.equal(result.reset, false);
+  assert.ok(result.delta > 0);
+  assert.ok(result.total > 0);
+});
+
+test('dropping a block while the generation still grows does not reset', () => {
+  const counter = createStreamCounter();
+  counter.update([
+    { kind: 'text', text: 'aaaaaa' },
+    { kind: 'text', text: 'b' },
+  ]);
+  const result = counter.update([{ kind: 'text', text: 'aaaaaaaaaa' }]);
+  assert.equal(result.reset, false);
+  assert.ok(result.delta > 0);
+});
+
 test('a shrinking or rewritten block restarts the generation', () => {
   const counter = createStreamCounter();
   counter.update([{ kind: 'text', text: 'abcdef' }]);

@@ -16,9 +16,10 @@ the contract; the UI is the display. The 1.2.0 classic dual dial uses all of it.
   `reasoning` and `argsRaw`. Block metadata (`kind`, `callId`, tool name, ids) is
   excluded. Tool results are not model output and are ignored.
 - **How it is counted**: incrementally. The counter keeps the previous text per
-  block and tokenizes only the appended slice; a new generation, a shrinking
-  block or a rewritten block restarts the count. This keeps a long generation
-  O(delta) instead of O(n²).
+  block and tokenizes only the appended slice; a new generation or a **total
+  decrease** restarts the count. A block rewrite or drop that still grows the
+  generation is counted as a delta, so a transient host rewrite cannot make the
+  needle drop to zero. This keeps a long generation O(delta) instead of O(n²).
 - **Character weights**: **0.6 token/CJK character**, **0.3 token/ASCII letter**
   and digit, 0.06 for a space, 0.1 for newline/tab, 0.35 for other punctuation.
   These are documented estimates, not tokenizer output.
@@ -107,7 +108,9 @@ Calibration state is explicit:
 - Stream counting is incremental (O(delta)).
 - The rAF loop drives CSS variables (`--rg-p`, `--rg-over`) and stops once the
   needle settles and no token has arrived for 2.4 s; React only receives a
-  rounded readout at about 8 Hz.
+  rounded readout at about 8 Hz. When the loop resumes, the meter clock is
+  primed so the first tick cannot apply a huge dt, and the frame dt is capped at
+  50 ms.
 - The body `MutationObserver` is attached only when the chat stream is
   unavailable, and is detached as soon as the stream becomes available.
 - Density uses a `ResizeObserver` per gauge, not a per-frame width poll.
@@ -115,7 +118,7 @@ Calibration state is explicit:
 
 ## Verification
 
-- `npm test` — 42 tests:
+- `npm test` — 44 tests:
   - measurement pure functions and host-compatible HIT formatting;
   - incremental stream counting, rewind/reset behaviour;
   - 1.2 s window, calibration deltas, bounds, generation/session resets;

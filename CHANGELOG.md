@@ -8,16 +8,17 @@
 - Removed the four-style switcher, the gauge gear/popover and the four-style galleries from the shipped UI. The four-style code is no longer imported by the bundle and remains recoverable from the `v1.1.0` tag and GitHub Release.
 - Settings now live only in the host `settings.section`: placement, density, full scale, CTX warning threshold, sub-readout switch, language and calibration reset.
 - Restored the original density behaviour: composer full / compact / minimal at 860 / 620; stats bar full / minimal at 560. Dial sizes 56 / 50 / 44 and 42 / 38.
+- Made the classic needle continuous across host partial rewrites: the counter only restarts on a real total decrease (or a cleared partial), the meter clock is primed when the rAF loop resumes, the frame dt is capped at 50 ms, and the SVG needle declares `transform-box: view-box` / `will-change`. `window.__retroDock.getTrace()` keeps a short needle/target trace for diagnostics.
 - The classic gauge runs on the 1.1.0 measurement engine; the arc and needle are driven by `--rg-p`, ticks are scale-aware, and overspeed keeps the cyan halo/color shift.
 - Updated README, README.en, MEASUREMENT, package metadata and screenshots (`docs/classic-dark.jpg`, `docs/settings-*.jpg`).
 
 ### Kept
 
-- Incremental stream counting, delta calibration with pending/available/unavailable states, host-compatible HIT formatting, idle rAF stop, observer detach, ResizeObserver density, `dsh-retro-dock:prefs:v2` migration and the 42-test suite.
+- Incremental stream counting, delta calibration with pending/available/unavailable states, host-compatible HIT formatting, idle rAF stop, observer detach, ResizeObserver density, `dsh-retro-dock:prefs:v2` migration and the 44-test suite.
 
 ### Verification
 
-- 42/42 tests pass; the classic gauge and settings page render in Chromium. A real-session calibration trace is still pending.
+- 44/44 tests pass; the classic gauge and settings page render in Chromium. A real-session calibration trace is still pending.
 
 ## 1.1.0 — 2026-10-26
 

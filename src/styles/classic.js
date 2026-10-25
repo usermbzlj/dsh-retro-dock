@@ -81,6 +81,8 @@ export const CLASSIC_CSS = String.raw`
 .rg-needle-group {
   transform: rotate(calc(150deg + var(--rg-p, 0) * 2.4deg));
   transform-origin: 20px 20px;
+  transform-box: view-box;
+  will-change: transform;
 }
 
 .rg-needle {
