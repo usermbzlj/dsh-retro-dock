@@ -41,8 +41,12 @@ The host's durable `sessionStats` projection exposes `decodeTokens` and
 3. Accept a sample when `realDelta >= 20` and `estDelta >= 8`. The target is
    `realDelta / estDelta`, clamped to **0.4–2.5**, and the factor moves 25% of
    the way toward it.
-4. A session switch (host `decodeTokens` drops below half) resets the session,
-   the counter and the factor. A generation restart keeps the learned factor.
+4. A host `decodeTokens` drop below half is treated as a **calibration
+   boundary**, not a stream reset: the factor is reset and the baseline is
+   rebased, but the live rate window and the chat counter are kept. Otherwise a
+   sub-dial/projection refresh would zero the main needle. A generation restart
+   keeps the learned factor; a real chat reset clears the counter via the
+   partial.
 5. Manual reset sets the factor to 1 and clears samples, but keeps the session.
 
 Comparing deltas (not a session average vs a single generation) keeps the factor

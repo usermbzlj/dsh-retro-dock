@@ -147,11 +147,13 @@ export const createEngine = (options = {}) => {
       }
 
       if (decodeTokens < sessionDecode * 0.5) {
-        rate.resetSession();
-        counter.reset();
+        // A stats projection drop is a calibration boundary, not a stream
+        // reset. Keep the live rate window and the chat counter; only rebase
+        // the calibration so a sub-dial refresh cannot zero the main needle.
+        rate.resetCalibration();
         sessionDecode = decodeTokens;
         lastRealDecode = decodeTokens;
-        lastEstimated = 0;
+        lastEstimated = rate.estimatedTotal();
         emit();
         return;
       }

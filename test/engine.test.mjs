@@ -40,6 +40,10 @@ test('calibration uses host token deltas and resets on a session switch', () => 
   calibration = engine.getCalibration();
   assert.equal(calibration.samples, 0);
   assert.equal(calibration.factor, 1);
+  // A stats-boundary reset is calibration-only: the live rate window and the
+  // stream counter must survive, otherwise the main needle drops to zero when
+  // the context/cache sub-dial refreshes.
+  assert.ok(engine.getState().estimated > 0);
 });
 
 test('a missing sessionStats projection is reported as unavailable', () => {

@@ -1179,11 +1179,10 @@
           return;
         }
         if (decodeTokens < sessionDecode * 0.5) {
-          rate.resetSession();
-          counter.reset();
+          rate.resetCalibration();
           sessionDecode = decodeTokens;
           lastRealDecode = decodeTokens;
-          lastEstimated = 0;
+          lastEstimated = rate.estimatedTotal();
           emit();
           return;
         }
