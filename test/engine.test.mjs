@@ -77,6 +77,52 @@ test('an implausible token ratio is rejected rather than clamped', () => {
   assert.equal(calibration.factor, 1);
 });
 
+test('the last turn reports first-token latency and active average speed', () => {
+  const engine = createEngine();
+  engine.setStream({ ok: true });
+  assert.equal(engine.getLastTurn(), null);
+  engine.setRunning(true, 1000);
+  engine.noteTokens(10, 1800);
+  for (let index = 1; index <= 10; index += 1) engine.noteTokens(10, 1800 + index * 100);
+  const turn = engine.getLastTurn();
+  assert.equal(turn.ttftMs, 800);
+  assert.equal(turn.tokens, 110);
+  assert.equal(Math.round(turn.avgTps), 100);
+});
+
+test('without a running flag a long pause starts a new turn and latency is unknown', () => {
+  const engine = createEngine();
+  engine.noteTokens(50, 1000);
+  engine.noteTokens(50, 1100);
+  engine.noteTokens(5, 9000);
+  const turn = engine.getLastTurn();
+  assert.equal(turn.ttftMs, null);
+  assert.equal(turn.tokens, 5);
+  assert.equal(turn.avgTps, null);
+});
+
+test('tool waits inside a turn do not dilute the average', () => {
+  const engine = createEngine();
+  engine.setRunning(true, 0);
+  for (const at of [100, 200, 300, 400, 8400, 8500, 8600, 8700]) engine.noteTokens(10, at);
+  assert.equal(Math.round(engine.getLastTurn().avgTps), 100);
+});
+
+test('the measurement log records tokens, stats, running flips and samples', () => {
+  const engine = createEngine();
+  engine.setStream({ ok: true });
+  engine.setRunning(true, 900);
+  engine.setStats({ decodeTokens: 1000, decodeMs: 5000 }, 1000);
+  engine.notePartial(blocks('中'.repeat(40)), 1100);
+  engine.setStats({ decodeTokens: 1030, decodeMs: 5200 }, 1100);
+  const exported = engine.exportLog();
+  assert.equal(exported.format, 'retro-dock-log/1');
+  const kinds = exported.entries.map((entry) => entry.k);
+  assert.deepEqual(kinds, ['run', 'stats', 'tok', 'stats', 'cal']);
+  assert.equal(exported.calibration.samples, 1);
+  assert.equal(JSON.stringify(exported).includes('中'), false, 'no conversation text');
+});
+
 test('a missing sessionStats projection is reported as unavailable', () => {
   const engine = createEngine();
   engine.setStats({ decodeTokens: 100, decodeMs: 1000 }, 1000);

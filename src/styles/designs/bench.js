@@ -30,7 +30,7 @@ export const BENCH_CSS = String.raw`
   padding: 0;
   border-radius: 0;
   color: var(--bench-ink);
-  font-family: Bahnschrift, "DIN Alternate", "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
 }
 
@@ -141,7 +141,7 @@ export const BENCH_CSS = String.raw`
 
 .rg-gauge[data-style="bench"] .rgx-bench-labels text {
   fill: var(--bench-muted);
-  font-family: Bahnschrift, "DIN Alternate", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-size: 4.4px;
   font-weight: 500;
   letter-spacing: .02em;
@@ -369,7 +369,7 @@ export const BENCH_CSS = String.raw`
   border-radius: 3px;
   padding: 3px 8px;
   color: var(--bench-ink);
-  font-family: Bahnschrift, "DIN Alternate", "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-size: 10.5px;
 }
 

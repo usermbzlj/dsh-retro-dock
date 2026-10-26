@@ -200,6 +200,8 @@ test('the dock mounts, streams, switches styles and toggles placement', async ()
   });
   const styleOptions = settingsHost.querySelectorAll('.rg-style-option');
   assert.equal(styleOptions.length, 8, 'classic plus seven instrument languages');
+  assert.equal(settingsHost.querySelector('.rg-export-log').textContent, '导出测量日志');
+  assert.ok(settingsHost.querySelector('.rg-turn-text').textContent.length > 0);
   assert.equal(styleOptions[0].getAttribute('aria-label'), '经典 Classic');
 
   await act(async () => {

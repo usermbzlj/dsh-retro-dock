@@ -27,6 +27,7 @@ import {
 import { ClassicGauge } from './classic.js';
 import { DesignGauge } from './design-gauge.js';
 import { readContextPressure, readCacheHit } from './read-dom.js';
+import { formatTurn } from './turn.js';
 
 const h = (...args) => R.h(...args);
 
@@ -71,7 +72,7 @@ export const createGauge = (variant) => function GaugeSlot(props) {
 
   R.useEffect(() => {
     if (!active) return;
-    engine.setRunning(running);
+    engine.setRunning(running, now());
   }, [active, running]);
 
   R.useEffect(() => {
@@ -175,6 +176,7 @@ export const createGauge = (variant) => function GaugeSlot(props) {
     source,
     sourceText,
     calibrationText,
+    turnText: formatTurn(engine.getLastTurn(), t),
     scale: snapshot.scale,
     revision,
   };

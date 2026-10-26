@@ -66,7 +66,7 @@ export const DESIGN_BASE_CSS = String.raw`
   border: 1px solid currentColor;
   border-radius: 2px;
   color: var(--dsw-alias-label-tertiary, #6a6c67);
-  font-family: Bahnschrift, "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-size: 7.5px;
   font-weight: 600;
   letter-spacing: .04em;

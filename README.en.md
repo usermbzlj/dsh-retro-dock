@@ -1,6 +1,6 @@
 # DSH Retro Dock
 
-A composer instrument for DeepSeek Harness: live tokens per second, context pressure and session cache hit. 1.4.0 keeps the classic dual dial and adds seven selectable measuring languages: Bench, Broadcast VU, Altimeter, Signal, Chart, Swiss and Compass. Pick one under **Settings → Retro Dock → Style**; the classic dual dial remains the default.
+A composer instrument for DeepSeek Harness: live tokens per second, context pressure and session cache hit. It keeps the classic dual dial and offers seven selectable measuring languages: Bench, Broadcast VU, Altimeter, Signal, Chart, Swiss and Compass. Pick one under **Settings → Retro Dock → Style**; the classic dual dial remains the default. 1.5.0 adds a last-turn readout (first-token latency, average speed, output size) and a measurement-log export.
 
 ![Seven measuring languages](docs/seven-languages-hero.jpg)
 
@@ -43,6 +43,8 @@ The settings picker shows eight real 42px previews; the preview follows position
 - **CTX / HIT**: current context pressure and whole-session cache hit. HIT keeps the host's precision and never rounds a partial hit to 100%.
 - **Styles**: eight options (classic plus seven measuring languages); 42px real previews in settings; switching applies immediately.
 - **Settings**: style, placement, density, full scale, CTX warning, sub-readout switch, language, calibration reset. Full-page controls; the preview uses the current scale, warning line and placement, and labels example readings as examples.
+- **Last turn**: first-token latency (when the host exposes a running flag), average speed with tool waits removed, and output tokens; shown in the tooltip and on the settings page.
+- **Measurement log**: "Export measurement log" in settings downloads a JSON of timestamps, token counts, host stats and calibration samples — no conversation text — for offline calibration review.
 - **Language**: Chinese / English / follow host; tooltip, aria and settings are bilingual.
 - **Performance**: idle rAF stop; no DOM observer while a stream is active; O(delta) counting; ResizeObserver density; only the Chart style records a 20s trace at 4Hz while selected, paused when the page is hidden.
 - **Privacy**: no network requests, no credentials; one preference key. `window.__retroDock` is a debug mirror.
@@ -69,7 +71,7 @@ After installing, check that `~/.dsh/profiles/<profile>/package.json` has `@loca
 **Local tarball**
 
 ```bash
-npm pack   # local-retro-dock-1.4.0.tgz
+npm pack   # local-retro-dock-1.5.0.tgz
 ```
 
 > The 1.1.0 four-style release remains available from the tag / Release. `main` is 1.4.0: classic plus seven measuring languages.
@@ -106,7 +108,7 @@ All seven languages read the same data. The Chart trace only records samples aft
 ```bash
 npm install
 npm run build      # src/ -> client.js
-npm test           # 59 tests
+npm test           # 63 tests
 npm run preview    # docs/gallery.html (classic specimens + settings)
 npm run catalogue  # docs/catalogue.html (seven-language catalogue)
 npm run shots      # needs Chromium: npx playwright install chromium
@@ -139,7 +141,7 @@ Tests cover pure measurement, incremental counting, window/calibration, preferen
 
 ## Verification
 
-- Automation: 59/59 pass; the classic gauge, all seven new mechanisms and the settings style picker render in Chromium.
+- Automation: 63/63 pass; the classic gauge, all seven new mechanisms and the settings style picker render in Chromium.
 - Catalogue: `docs/catalogue.html` renders at 1440px with 91 real 1× instrument instances; light/dark hosts, six states, 2× craft details and a minimal-density comparison are in the page.
 - Contrast: primary and secondary text is ≥4.5:1; arcs, needles, lamps and limit marks are ≥3:1. The light Signal amber was deepened to 4.3:1; the light Altimeter limit red to 5.0:1.
 - Real host: no real-session trace yet. After a refresh/restart the tooltip should say `数据源 宿主统计`; if it says `页面文本` or stays on "waiting for host stats", please report the tooltip text and host version.
@@ -147,6 +149,7 @@ Tests cover pure measurement, incremental counting, window/calibration, preferen
 
 ## Versions
 
+- **1.5.0**: last-turn readout (first token, average speed, output size); measurement-log export; conversation switches no longer skew calibration; Signal stays dark for an unknown CTX; macOS / Linux font fallbacks for the seven styles.
 - **1.4.0**: seven selectable measuring languages (Bench, VU, Altimeter, Signal, Chart, Swiss, Compass) plus the classic dual dial; style picker in settings; `prefs:v3` with v2 migration; shared shell, states and minimal line; design study and catalogue.
 - **1.3.0**: theme-aware classic dial (light readable), CTX redline, minimal warning, visible source/stale states, fixed `≈` slot, full-page settings with truthful previews, new README specimens; removed the 1.1.0 layer and `style` preference.
 - **1.2.0**: restored the pre-1.1.0 classic dual dial as the only gauge, keeping measurement/calibration/performance and the settings data layer.

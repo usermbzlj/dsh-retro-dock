@@ -31,7 +31,7 @@ export const ALTIMETER_CSS = String.raw`
   padding: 0;
   border-radius: 0;
   color: var(--alt-ink);
-  font-family: Bahnschrift, "Arial Narrow", "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Arial Narrow", "Roboto Condensed", "Liberation Sans Narrow", sans-serif;
   font-variant-numeric: tabular-nums;
 }
 
@@ -147,7 +147,7 @@ export const ALTIMETER_CSS = String.raw`
 .rg-gauge[data-style="altimeter"] .rgx-alt-labels text {
   fill: var(--alt-face-ink);
   opacity: .85;
-  font-family: Bahnschrift, "Arial Narrow", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Arial Narrow", "Roboto Condensed", "Liberation Sans Narrow", sans-serif;
   font-size: 4.2px;
   font-stretch: 87.5%;
 }
@@ -388,7 +388,7 @@ export const ALTIMETER_CSS = String.raw`
   border-radius: 2px;
   padding: 3px 8px;
   color: var(--alt-ink);
-  font-family: Bahnschrift, "Arial Narrow", "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Arial Narrow", "Roboto Condensed", "Liberation Sans Narrow", sans-serif;
   font-size: 10.5px;
 }
 

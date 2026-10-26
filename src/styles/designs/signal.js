@@ -31,7 +31,7 @@ export const SIGNAL_CSS = String.raw`
   padding: 0;
   border-radius: 0;
   color: var(--sig-ink);
-  font-family: Bahnschrift, "DIN Alternate", "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
 }
 
@@ -337,7 +337,7 @@ export const SIGNAL_CSS = String.raw`
   border-radius: 2px;
   padding: 3px 8px;
   color: var(--sig-ink);
-  font-family: Bahnschrift, "DIN Alternate", "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-size: 10.5px;
 }
 

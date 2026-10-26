@@ -1,6 +1,12 @@
 # Changelog
 
-## Unreleased
+## 1.5.0 — 2026-10-26
+
+### Added
+
+- **Last-turn readout** in the tooltip and on the settings page: first-token latency (from the host running flag; omitted when the host has none), average speed over active decode time — gaps over 1.5 s such as tool waits are excluded — and output tokens, all with the current calibration factor. Without a running flag a 3 s pause starts a new turn.
+- **Measurement-log export** in settings: a bounded JSON log (20 000 entries) of token deltas, host `sessionStats`, running flips and accepted calibration samples, for offline calibration review. It holds no conversation text and never leaves the page unless exported.
+- macOS / Linux fallbacks in the seven styles' font stacks (DIN Alternate, Roboto Condensed, SF Mono, Menlo, DejaVu); Windows rendering is unchanged.
 
 ### Fixed
 

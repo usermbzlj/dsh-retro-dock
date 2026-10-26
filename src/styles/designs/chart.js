@@ -29,7 +29,7 @@ export const CHART_CSS = String.raw`
   padding: 0;
   border-radius: 0;
   color: var(--chart-ink);
-  font-family: Consolas, "Cascadia Mono", monospace;
+  font-family: Consolas, "Cascadia Mono", "SF Mono", Menlo, "DejaVu Sans Mono", monospace;
   font-variant-numeric: tabular-nums;
 }
 
@@ -157,7 +157,7 @@ export const CHART_CSS = String.raw`
 }
 
 .rg-gauge[data-style="chart"] .rgx-chart-unit {
-  font-family: Bahnschrift, "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-size: var(--chart-unit);
   font-weight: 500;
   letter-spacing: .04em;
@@ -177,7 +177,7 @@ export const CHART_CSS = String.raw`
 
 .rg-gauge[data-style="chart"] .rgx-chart-span {
   flex: 0 0 auto;
-  font-family: Bahnschrift, "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-size: 5.5px;
   letter-spacing: .04em;
   color: var(--chart-muted);
@@ -241,7 +241,7 @@ export const CHART_CSS = String.raw`
   flex: 0 0 auto;
   min-width: 0;
   padding-left: 5px;
-  font-family: Bahnschrift, "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
 }
 
 .rg-gauge[data-style="chart"] .rgx-chart-ctx,
@@ -263,7 +263,7 @@ export const CHART_CSS = String.raw`
 }
 
 .rg-gauge[data-style="chart"] .rgx-chart-num {
-  font-family: Consolas, "Cascadia Mono", monospace;
+  font-family: Consolas, "Cascadia Mono", "SF Mono", Menlo, "DejaVu Sans Mono", monospace;
   font-size: var(--chart-num);
   font-weight: 600;
   color: var(--chart-ink);
@@ -321,7 +321,7 @@ export const CHART_CSS = String.raw`
   border-radius: 2px;
   padding: 3px 8px;
   color: var(--chart-ink);
-  font-family: Consolas, "Cascadia Mono", monospace;
+  font-family: Consolas, "Cascadia Mono", "SF Mono", Menlo, "DejaVu Sans Mono", monospace;
   font-size: 10.5px;
 }
 

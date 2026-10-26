@@ -50,6 +50,7 @@ export const DesignGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
   const titleParts = [];
   if (vm.stale) titleParts.push(t('sourceUnavailable'));
   titleParts.push(`${t('tipRate', { tps: vm.displayTps })} · ${t('tipCtx', { ctx: vm.ctxDisplay })} · ${t('tipHit', { hit: vm.hitDisplay })}`);
+  if (vm.turnText) titleParts.push(vm.turnText);
   const metaParts = [t('scaleTooltip', { n: vm.scale }), t('warnAtTooltip', { n: vm.warnAt })];
   if (vm.calibrationText) metaParts.push(vm.calibrationText);
   titleParts.push(metaParts.join(' · '));

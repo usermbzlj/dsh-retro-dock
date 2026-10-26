@@ -16,6 +16,11 @@ const STATS_CLOCK_SLACK_MS = 2000;
 // estimator bias but a mismatched interval, so it is rejected, not clamped.
 const MIN_PLAUSIBLE_RATIO = 0.25;
 const MAX_PLAUSIBLE_RATIO = 4;
+// Without a host "running" flag, a pause this long starts a new turn.
+const TURN_GAP_MS = 3000;
+// Gaps longer than this (tool waits, stalls) are not decode time.
+const TURN_ACTIVE_GAP_MS = 1500;
+const LOG_LIMIT = 20000;
 
 /**
  * @param {{ now?: () => number }} [options]
@@ -41,6 +46,14 @@ export const createEngine = (options = {}) => {
   let previousDecodeMs = 0;
   let previousStatsAt = 0;
 
+  let turn = null;
+  let log = [];
+
+  const record = (entry) => {
+    log.push(entry);
+    if (log.length > LOG_LIMIT) log = log.slice(log.length - LOG_LIMIT);
+  };
+
   const rebaseCalibration = (decodeTokens) => {
     lastRealDecode = decodeTokens;
     lastEstimated = rate.estimatedTotal();
@@ -51,7 +64,28 @@ export const createEngine = (options = {}) => {
     for (const listener of listeners) listener(version);
   };
 
-  const markActivity = (at) => {
+  const startTurn = (startAt) => {
+    turn = { startAt, firstAt: null, lastAt: null, tokens: 0, activeTokens: 0, activeMs: 0 };
+  };
+
+  const noteTurn = (delta, at) => {
+    const gap = turn && turn.lastAt !== null ? at - turn.lastAt : 0;
+    if (turn === null || (running !== true && turn.lastAt !== null && gap > TURN_GAP_MS)) startTurn(null);
+    if (turn.firstAt === null) {
+      turn.firstAt = at;
+    } else if (gap > 0 && gap <= TURN_ACTIVE_GAP_MS) {
+      // The first delta has no measured duration, so only later deltas feed
+      // the average.
+      turn.activeMs += gap;
+      turn.activeTokens += delta;
+    }
+    turn.tokens += delta;
+    turn.lastAt = at;
+  };
+
+  const markActivity = (delta, at) => {
+    noteTurn(delta, at);
+    record({ t: Math.round(at), k: 'tok', d: Math.round(delta * 100) / 100 });
     lastNoteAt = Math.max(lastNoteAt, at);
     for (const listener of activityListeners) listener();
   };
@@ -72,7 +106,7 @@ export const createEngine = (options = {}) => {
       // zero at every step/HIT refresh.
       if (result.delta > 0) {
         rate.note(result.delta, at);
-        markActivity(at);
+        markActivity(result.delta, at);
       }
       return result;
     },
@@ -86,7 +120,7 @@ export const createEngine = (options = {}) => {
     noteTokens(delta, at) {
       if (!(delta > 0)) return;
       rate.note(delta, at);
-      markActivity(at);
+      markActivity(delta, at);
     },
 
     /**
@@ -112,12 +146,45 @@ export const createEngine = (options = {}) => {
 
     /**
      * @param {boolean|null} value host "running" flag.
+     * @param {number} [at] monotonic timestamp; starts the turn clock.
      */
-    setRunning(value) {
+    setRunning(value, at) {
       const next = typeof value === 'boolean' ? value : null;
       if (next === running) return;
+      if (next === true && Number.isFinite(at)) startTurn(at);
       running = next;
+      if (Number.isFinite(at)) record({ t: Math.round(at), k: 'run', v: next });
       emit();
+    },
+
+    /**
+     * The most recent turn, in progress or finished. Tokens and speed carry the
+     * current calibration factor; `ttftMs` is null without a host running flag.
+     *
+     * @returns {{ ttftMs: number|null, tokens: number, avgTps: number|null }|null}
+     */
+    getLastTurn() {
+      if (turn === null || turn.firstAt === null) return null;
+      const factor = rate.snapshot().calibration;
+      return {
+        ttftMs: turn.startAt === null ? null : Math.max(0, turn.firstAt - turn.startAt),
+        tokens: turn.tokens * factor,
+        avgTps: turn.activeMs >= 500 ? (turn.activeTokens * factor) / (turn.activeMs / 1000) : null,
+      };
+    },
+
+    /**
+     * Raw measurement events for offline replay: token deltas, host stats,
+     * running flips and calibration samples. Bounded; nothing leaves the page
+     * unless the user exports it.
+     */
+    exportLog() {
+      const calibration = rate.snapshot();
+      return {
+        format: 'retro-dock-log/1',
+        calibration: { factor: calibration.calibration, samples: calibration.sampleCount, status: calibrationStatus },
+        entries: log.slice(),
+      };
     },
 
     /**
@@ -154,6 +221,7 @@ export const createEngine = (options = {}) => {
       const key = `${decodeTokens}:${decodeMs}`;
       if (key === lastStatsKey) return;
       lastStatsKey = key;
+      if (Number.isFinite(at)) record({ t: Math.round(at), k: 'stats', tok: decodeTokens, ms: decodeMs });
       hasSeenStats = true;
       calibrationStatus = 'available';
       calibrationAvailable = true;
@@ -199,6 +267,7 @@ export const createEngine = (options = {}) => {
           return;
         }
         if (rate.calibrateFromCounts(realDelta, estimatedDelta, at)) {
+          record({ t: Math.round(at), k: 'cal', real: realDelta, est: Math.round(estimatedDelta * 100) / 100 });
           rebaseCalibration(decodeTokens);
           emit();
         }
@@ -238,6 +307,7 @@ export const createEngine = (options = {}) => {
       lastStatsKey = '';
       previousDecodeMs = 0;
       previousStatsAt = 0;
+      turn = null;
       emit();
     },
 

@@ -27,7 +27,7 @@ export const VU_CSS = String.raw`
   padding: 0;
   border-radius: 0;
   color: var(--vu-ink);
-  font-family: Bahnschrift, "DIN Alternate", "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
 }
 
@@ -149,7 +149,7 @@ export const VU_CSS = String.raw`
 .rg-gauge[data-style="vu"] .rgx-vu-labels text {
   fill: var(--vu-ink);
   opacity: .88;
-  font-family: Constantia, Cambria, Georgia, serif;
+  font-family: Constantia, Cambria, Georgia, "DejaVu Serif", serif;
   font-size: 5.2px;
   font-variant-numeric: lining-nums tabular-nums;
 }
@@ -288,7 +288,7 @@ export const VU_CSS = String.raw`
   box-shadow: inset 0 0 0 1px var(--vu-inner);
   padding: 3px 8px;
   color: var(--vu-ink);
-  font-family: Bahnschrift, "DIN Alternate", "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-size: 10.5px;
 }
 

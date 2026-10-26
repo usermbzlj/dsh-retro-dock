@@ -1,6 +1,6 @@
 # DSH Retro Dock
 
-DeepSeek Harness 输入区仪表：实时生成速度、上下文占用与会话缓存命中。1.4.0 保留经典双表盘，并加入七种可选的测量语言——台表、广播 VU、高度表、信号楼、记录纸、瑞士尺、罗经。样式在宿主「设置 → Retro Dock → 样式」里切换，默认仍是经典双表盘。
+DeepSeek Harness 输入区仪表：实时生成速度、上下文占用与会话缓存命中。保留经典双表盘，并提供七种可选的测量语言——台表、广播 VU、高度表、信号楼、记录纸、瑞士尺、罗经。样式在宿主「设置 → Retro Dock → 样式」里切换，默认仍是经典双表盘。1.5.0 新增「最近一轮」读数（首 token 延迟、平均速度、输出量）和测量日志导出。
 
 ![七种测量语言](docs/seven-languages-hero.jpg)
 
@@ -43,6 +43,8 @@ DeepSeek Harness 输入区仪表：实时生成速度、上下文占用与会话
 - **副表**：CTX = 当前上下文占用；HIT = 全会话缓存命中。HIT 的精度与宿主统计条一致，不把部分命中舍成 100%。
 - **样式**：8 个选项（经典 + 七种测量语言）；设置页用 42px 真实预览；选中立即生效，不必刷新。
 - **设置**：样式、位置、密度、满量程、CTX 警告阈值、副表开关、语言、重置校准。全页尺度控件；预览使用当前满量程、警戒线和停靠位置，示例读数明确标注为“示例”。
+- **最近一轮**：首 token 延迟（宿主提供运行状态时）、去掉工具等待后的平均速度、输出 token 数；显示在 tooltip 和设置页。
+- **测量日志**：设置页「导出测量日志」下载一个 JSON，只含时间戳、token 计数、宿主统计与校准样本，不含对话内容；用于离线复盘校准。
 - **语言**：中文 / English / 跟随宿主；tooltip、aria、设置页双语。
 - **性能**：空闲停 rAF；有聊天流时不挂 DOM observer；流式计数 O(delta)；密度用 ResizeObserver；只有记录纸样式在选中时以 4Hz 记录 20 秒轨迹，页面隐藏时暂停采样。
 - **隐私**：不发网络请求、不读凭据；只持久化一个偏好 key。`window.__retroDock` 是调试镜像。
@@ -69,7 +71,7 @@ pnpm add github:usermbzlj/dsh-retro-dock
 **本地打包**
 
 ```bash
-npm pack   # local-retro-dock-1.4.0.tgz
+npm pack   # local-retro-dock-1.5.0.tgz
 ```
 
 > 1.1.0 的四套样式版本仍保留在 tag / Release 里；当前 `main` 是 1.4.0：经典 + 七种测量语言。
@@ -106,7 +108,7 @@ npm pack   # local-retro-dock-1.4.0.tgz
 ```bash
 npm install
 npm run build      # 把 src/ 打包成 client.js
-npm test           # 59 项测试
+npm test           # 63 项测试
 npm run preview    # 生成 docs/gallery.html（经典样张与设置页）
 npm run catalogue  # 生成 docs/catalogue.html（七种测量语言目录）
 npm run shots      # 需要 Chromium：npx playwright install chromium
@@ -139,7 +141,7 @@ scripts/              build / gallery / catalogue / shots
 
 ## 验证状态
 
-- 自动化：59/59 通过；经典仪表、七套新机构、设置页样式选择器都在 Chromium 中渲染并截图。
+- 自动化：63/63 通过；经典仪表、七套新机构、设置页样式选择器都在 Chromium 中渲染并截图。
 - 目录页：`docs/catalogue.html` 在 Chromium 中按 1440px 渲染，共 91 个真实 1× 仪表实例；浅/深双语料、六种状态、2× 工艺细节与 minimal 密度对照都在页面里。
 - 对比度：深层墨/浅层墨文字均 ≥4.5:1；承担读数的弧、针、灯与红区 ≥3:1；浅色信号楼的琥珀灯已加深到 4.3:1，浅色高度表的界限红改为 5.0:1。
 - 宿主实机：尚未采集真实会话 trace。刷新/重启后 tooltip 应显示 `数据源 宿主统计`；如果显示 `页面文本` 或长期“等待宿主统计”，请反馈 tooltip 文案和宿主版本。
@@ -147,6 +149,7 @@ scripts/              build / gallery / catalogue / shots
 
 ## 版本说明
 
+- **1.5.0**：最近一轮读数（首 token、平均速度、输出量）；测量日志导出；会话切换不再污染校准；CTX 未知时信号楼不亮灯；七套样式补齐 macOS / Linux 回落字体。
 - **1.4.0**：七种可选测量语言（台表、VU、高度表、信号楼、记录纸、瑞士尺、罗经）+ 经典双表盘；设置页样式选择器；`prefs:v3` 与 v2 迁移；共用 shell、状态与最小读数行；七种语言的设计研究与目录页。
 - **1.3.0**：主题化仪表（浅色可读）、CTX 阈值 redline、minimal 警告、数据源/陈旧状态的可见标记、固定 `≈` 槽位、全页设置页与真实预览、README 样张表；清理 1.1.0 遗留样式/组件和 `style` 偏好。
 - **1.2.0**：恢复 1.1.0 之前的经典双表盘视觉，保留测量/校准/性能与设置数据层。

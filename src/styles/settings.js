@@ -74,7 +74,7 @@ export const SETTINGS_CSS = String.raw`
   min-width: 0;
   max-width: 50%;
   overflow: hidden;
-  font-family: Bahnschrift, "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-size: 9px;
   color: var(--dsw-alias-label-tertiary);
   white-space: nowrap;
@@ -277,16 +277,22 @@ export const SETTINGS_CSS = String.raw`
 
 .rg-calib {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  max-width: 380px;
+  gap: 8px 12px;
+  max-width: 460px;
 }
 
 .rg-calib-text {
+  flex: 1 1 140px;
   font-size: 11px;
   line-height: 1.4;
   color: var(--dsw-alias-label-tertiary);
+}
+
+.rg-turn-text {
+  color: var(--dsw-alias-label-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
 .rg-btn {

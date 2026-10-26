@@ -10,8 +10,22 @@ import { usePrefs, useEngineVersion, useLang } from './hooks.js';
 import { ClassicPreview } from './classic.js';
 import { DesignPreview } from './design-gauge.js';
 import { VERSION } from '../version.js';
+import { formatTurn } from './turn.js';
 
 const h = (...args) => R.h(...args);
+
+const downloadLog = () => {
+  if (typeof document === 'undefined' || typeof Blob !== 'function' || typeof URL === 'undefined') return;
+  const payload = { ...engine.exportLog(), version: VERSION, exportedAt: new Date().toISOString() };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `retro-dock-log-${payload.exportedAt.replace(/[:.]/g, '-')}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+};
 
 const Seg = ({ value, options, onChange, label }) => h('div', {
   className: 'rg-seg',
@@ -172,14 +186,23 @@ export const SettingsControls = ({ t, lang }) => {
       h('option', { value: 'auto' }, t('langAuto')),
       h('option', { value: 'zh' }, t('langZh')),
       h('option', { value: 'en' }, t('langEn')))),
-    h(Field, { label: t('calibration') },
+    h(Field, { label: t('turnTitle') },
+      h('div', { className: 'rg-calib' },
+        h('span', { className: 'rg-calib-text rg-turn-text' },
+          formatTurn(engine.getLastTurn(), t).replace(t('turnLabel'), '').trim() || t('turnEmpty')))),
+    h(Field, { label: t('calibration'), hint: t('exportLogHint') },
       h('div', { className: 'rg-calib' },
         h('span', { className: 'rg-calib-text' }, calibrationText),
         h('button', {
           type: 'button',
           className: 'rg-btn rg-btn-quiet',
           onClick: () => engine.resetCalibration(),
-        }, t('resetCalibration')))));
+        }, t('resetCalibration')),
+        h('button', {
+          type: 'button',
+          className: 'rg-btn rg-btn-quiet rg-export-log',
+          onClick: downloadLog,
+        }, t('exportLog')))));
 };
 
 const densityLabel = (density, t) => {

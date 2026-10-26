@@ -22,7 +22,7 @@ export const COMPASS_CSS = String.raw`
   padding: 0;
   border-radius: 0;
   color: var(--compass-ink);
-  font-family: Bahnschrift, "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-variant-numeric: tabular-nums;
 }
 
@@ -190,7 +190,7 @@ export const COMPASS_CSS = String.raw`
   align-items: baseline;
   gap: 2px;
   min-width: 0;
-  font-family: Cambria, Georgia, "Times New Roman", serif;
+  font-family: Cambria, Georgia, "DejaVu Serif", "Times New Roman", serif;
   font-size: var(--compass-value);
   font-weight: 600;
   letter-spacing: -.02em;
@@ -204,7 +204,7 @@ export const COMPASS_CSS = String.raw`
   display: inline-block;
   width: .85em;
   flex: 0 0 auto;
-  font-family: Cambria, Georgia, serif;
+  font-family: Cambria, Georgia, "DejaVu Serif", serif;
   font-size: .52em;
   font-weight: 500;
   text-align: center;
@@ -221,7 +221,7 @@ export const COMPASS_CSS = String.raw`
 .rg-gauge[data-style="compass"] .rgx-compass-unit {
   flex: 0 0 auto;
   margin-left: 1px;
-  font-family: Bahnschrift, "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-size: var(--compass-unit);
   font-weight: 500;
   letter-spacing: .04em;
@@ -232,7 +232,7 @@ export const COMPASS_CSS = String.raw`
   display: none;
   margin-left: 1px;
   color: var(--compass-warn);
-  font-family: Bahnschrift, "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-size: .6em;
   font-weight: 700;
 }
@@ -286,7 +286,7 @@ export const COMPASS_CSS = String.raw`
 
 .rg-gauge[data-style="compass"] .rgx-mini {
   color: var(--compass-ink);
-  font-family: Bahnschrift, "Segoe UI", sans-serif;
+  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-size: 10.5px;
 }
 
