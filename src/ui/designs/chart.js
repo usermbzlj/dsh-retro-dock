@@ -44,10 +44,14 @@ const useTrace = (vm) => {
     if (staticMode) return undefined;
     const timer = setInterval(() => {
       if (typeof document !== 'undefined' && document.hidden) return;
-      setSamples((previous) => [
-        ...previous.slice(-(COUNT - 1)),
-        latest.current,
-      ]);
+      setSamples((previous) => {
+        // Once the paper is flat, an idle tick changes nothing on screen;
+        // returning the same array lets React skip the render.
+        if (latest.current === 0
+          && previous.length === COUNT
+          && previous.every((value) => value === 0)) return previous;
+        return [...previous.slice(-(COUNT - 1)), latest.current];
+      });
     }, 250);
     return () => clearInterval(timer);
   }, [staticMode]);

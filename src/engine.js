@@ -7,6 +7,16 @@
 import { createRateMeter } from './rate.js';
 import { createStreamCounter } from './stream.js';
 
+// Decode time cannot accrue faster than the wall clock. The slack absorbs
+// batched projection pushes and modest decode overlap; a larger jump means the
+// host totals now belong to another conversation.
+const STATS_CLOCK_SLACK = 1.5;
+const STATS_CLOCK_SLACK_MS = 2000;
+// The factor is clamped to 0.4–2.5. A raw ratio far outside that range is not
+// estimator bias but a mismatched interval, so it is rejected, not clamped.
+const MIN_PLAUSIBLE_RATIO = 0.25;
+const MAX_PLAUSIBLE_RATIO = 4;
+
 /**
  * @param {{ now?: () => number }} [options]
  */
@@ -28,6 +38,13 @@ export const createEngine = (options = {}) => {
   let calibrationStatus = 'pending';
   let hasSeenStats = false;
   let lastStatsKey = '';
+  let previousDecodeMs = 0;
+  let previousStatsAt = 0;
+
+  const rebaseCalibration = (decodeTokens) => {
+    lastRealDecode = decodeTokens;
+    lastEstimated = rate.estimatedTotal();
+  };
 
   const emit = () => {
     version += 1;
@@ -141,10 +158,14 @@ export const createEngine = (options = {}) => {
       calibrationStatus = 'available';
       calibrationAvailable = true;
 
+      const decodeMsDelta = decodeMs - previousDecodeMs;
+      const elapsed = at - previousStatsAt;
+      previousDecodeMs = decodeMs;
+      previousStatsAt = at;
+
       if (sessionDecode === null) {
         sessionDecode = decodeTokens;
-        lastRealDecode = decodeTokens;
-        lastEstimated = rate.estimatedTotal();
+        rebaseCalibration(decodeTokens);
         emit();
         return;
       }
@@ -155,27 +176,35 @@ export const createEngine = (options = {}) => {
         // the calibration so a sub-dial refresh cannot zero the main needle.
         rate.resetCalibration();
         sessionDecode = decodeTokens;
-        lastRealDecode = decodeTokens;
-        lastEstimated = rate.estimatedTotal();
+        rebaseCalibration(decodeTokens);
         emit();
         return;
       }
 
       sessionDecode = decodeTokens;
+      if (decodeMsDelta < 0 || decodeMsDelta > elapsed * STATS_CLOCK_SLACK + STATS_CLOCK_SLACK_MS) {
+        // Switching to a longer conversation raises the totals instead of
+        // dropping them. That jump is not decode the meter observed, so the
+        // baseline moves without a sample; the learned factor stays valid.
+        rebaseCalibration(decodeTokens);
+        return;
+      }
+
       const realDelta = decodeTokens - lastRealDecode;
       const estimatedDelta = rate.estimatedTotal() - lastEstimated;
       if (realDelta >= 20 && estimatedDelta >= 8) {
+        const ratio = realDelta / estimatedDelta;
+        if (ratio < MIN_PLAUSIBLE_RATIO || ratio > MAX_PLAUSIBLE_RATIO) {
+          rebaseCalibration(decodeTokens);
+          return;
+        }
         if (rate.calibrateFromCounts(realDelta, estimatedDelta, at)) {
-          lastRealDecode = decodeTokens;
-          lastEstimated = rate.estimatedTotal();
+          rebaseCalibration(decodeTokens);
           emit();
         }
         return;
       }
-      if (realDelta < 0) {
-        lastRealDecode = decodeTokens;
-        lastEstimated = rate.estimatedTotal();
-      }
+      if (realDelta < 0) rebaseCalibration(decodeTokens);
     },
 
     /** Manual reset from settings. Keeps the session counters intact. */
@@ -207,6 +236,8 @@ export const createEngine = (options = {}) => {
       lastRealDecode = 0;
       lastEstimated = 0;
       lastStatsKey = '';
+      previousDecodeMs = 0;
+      previousStatsAt = 0;
       emit();
     },
 

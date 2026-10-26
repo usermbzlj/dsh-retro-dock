@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **Calibration survives conversation switches.** Switching to a conversation with larger host totals used to count the whole difference as one calibration sample: a single switch moved the factor from ×1.00 to ×1.38, and repeated switches pushed it toward the 2.5 limit. A `decodeMs` jump beyond the elapsed wall time now rebases the baseline without sampling, and a raw ratio outside 0.25–4 is rejected instead of clamped.
+- **Signal no longer shows green for an unknown CTX.** Without a context reading the lamps stay dark; before, the green lamp claimed the context was safe. The view model now carries `ctxKnown` / `hitKnown`.
+- **Chart stops re-rendering when idle.** Once the 20 s paper is flat, idle ticks no longer re-render the instrument.
+
+### Changed
+
+- The npm package ships only `docs/seven-languages-hero.jpg`; the 2.4 MB full catalogue capture is no longer included.
+
 ## 1.4.0 — 2026-10-26
 
 ### Added

@@ -51,7 +51,14 @@ The host's durable `sessionStats` projection exposes `decodeTokens` and
    sub-dial/projection refresh would zero the main needle. A generation restart
    keeps the learned factor; a cleared partial resets only the counter, so the
    rate window can decay smoothly instead of snapping to zero.
-5. Manual reset sets the factor to 1 and clears samples, but keeps the session.
+5. Switching to a longer conversation **raises** the host totals instead. Decode
+   time cannot accrue faster than the wall clock, so when `decodeMs` grows by
+   more than 1.5× the elapsed time plus 2 s (or goes backwards), the baseline
+   is rebased without taking a sample; the learned factor is kept.
+6. A sample whose raw ratio is outside **0.25–4** is rejected and the baseline
+   rebased. Such a ratio means the two deltas do not cover the same decode; it
+   is not clamped into the factor.
+7. Manual reset sets the factor to 1 and clears samples, but keeps the session.
 
 Comparing deltas (not a session average vs a single generation) keeps the factor
 valid across turns, tool waits and reloads. The tooltip shows the factor and
@@ -130,7 +137,7 @@ Calibration state is explicit:
 
 ## Verification
 
-- `npm test` — 49 tests:
+- `npm test` — 59 tests:
   - measurement pure functions and host-compatible HIT formatting;
   - incremental stream counting, rewind/reset behaviour;
   - 1.2 s window, calibration deltas, bounds, generation/session resets;

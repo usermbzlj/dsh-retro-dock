@@ -25,7 +25,10 @@ export const SignalBody = ({ vm, t }) => {
   const warnAt = clampPct(vm.warnAt ?? 80);
   const ctx = clampPct(vm.ctxValue || 0);
   const showSub = vm.sub !== false;
-  const state = vm.warn ? 'red' : ctx >= warnAt - 10 ? 'amber' : 'green';
+  // An unknown CTX lights no lamp: green would claim the context is safe.
+  const state = vm.ctxKnown === false
+    ? null
+    : vm.warn ? 'red' : ctx >= warnAt - 10 ? 'amber' : 'green';
 
   const arm = h('span', { className: 'rgx-signal-armwrap rgx-mechanism' },
     h('svg', {

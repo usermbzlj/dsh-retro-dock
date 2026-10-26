@@ -106,11 +106,11 @@ All seven languages read the same data. The Chart trace only records samples aft
 ```bash
 npm install
 npm run build      # src/ -> client.js
-npm test           # 56 tests
+npm test           # 59 tests
 npm run preview    # docs/gallery.html (classic specimens + settings)
 npm run catalogue  # docs/catalogue.html (seven-language catalogue)
 npm run shots      # needs Chromium: npx playwright install chromium
-npm run catalogue:shots  # also writes docs/seven-languages*.jpg
+npm run catalogue:shots  # also writes docs/seven-languages*.jpg (only the hero ships)
 ```
 
 `client.js` is a build artifact; do not edit it by hand. Source layout:
@@ -139,7 +139,7 @@ Tests cover pure measurement, incremental counting, window/calibration, preferen
 
 ## Verification
 
-- Automation: 56/56 pass; the classic gauge, all seven new mechanisms and the settings style picker render in Chromium.
+- Automation: 59/59 pass; the classic gauge, all seven new mechanisms and the settings style picker render in Chromium.
 - Catalogue: `docs/catalogue.html` renders at 1440px with 91 real 1× instrument instances; light/dark hosts, six states, 2× craft details and a minimal-density comparison are in the page.
 - Contrast: primary and secondary text is ≥4.5:1; arcs, needles, lamps and limit marks are ≥3:1. The light Signal amber was deepened to 4.3:1; the light Altimeter limit red to 5.0:1.
 - Real host: no real-session trace yet. After a refresh/restart the tooltip should say `数据源 宿主统计`; if it says `页面文本` or stays on "waiting for host stats", please report the tooltip text and host version.

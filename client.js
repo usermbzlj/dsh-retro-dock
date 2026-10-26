@@ -3760,6 +3760,10 @@
   };
 
   // src/engine.js
+  var STATS_CLOCK_SLACK = 1.5;
+  var STATS_CLOCK_SLACK_MS = 2e3;
+  var MIN_PLAUSIBLE_RATIO = 0.25;
+  var MAX_PLAUSIBLE_RATIO = 4;
   var createEngine = (options = {}) => {
     const rate = createRateMeter(options.rate);
     const counter = createStreamCounter();
@@ -3777,6 +3781,12 @@
     let calibrationStatus = "pending";
     let hasSeenStats = false;
     let lastStatsKey = "";
+    let previousDecodeMs = 0;
+    let previousStatsAt = 0;
+    const rebaseCalibration = (decodeTokens) => {
+      lastRealDecode = decodeTokens;
+      lastEstimated = rate.estimatedTotal();
+    };
     const emit = () => {
       version += 1;
       for (const listener of listeners) listener(version);
@@ -3873,36 +3883,43 @@
         hasSeenStats = true;
         calibrationStatus = "available";
         calibrationAvailable = true;
+        const decodeMsDelta = decodeMs - previousDecodeMs;
+        const elapsed = at2 - previousStatsAt;
+        previousDecodeMs = decodeMs;
+        previousStatsAt = at2;
         if (sessionDecode === null) {
           sessionDecode = decodeTokens;
-          lastRealDecode = decodeTokens;
-          lastEstimated = rate.estimatedTotal();
+          rebaseCalibration(decodeTokens);
           emit();
           return;
         }
         if (decodeTokens < sessionDecode * 0.5) {
           rate.resetCalibration();
           sessionDecode = decodeTokens;
-          lastRealDecode = decodeTokens;
-          lastEstimated = rate.estimatedTotal();
+          rebaseCalibration(decodeTokens);
           emit();
           return;
         }
         sessionDecode = decodeTokens;
+        if (decodeMsDelta < 0 || decodeMsDelta > elapsed * STATS_CLOCK_SLACK + STATS_CLOCK_SLACK_MS) {
+          rebaseCalibration(decodeTokens);
+          return;
+        }
         const realDelta = decodeTokens - lastRealDecode;
         const estimatedDelta = rate.estimatedTotal() - lastEstimated;
         if (realDelta >= 20 && estimatedDelta >= 8) {
+          const ratio = realDelta / estimatedDelta;
+          if (ratio < MIN_PLAUSIBLE_RATIO || ratio > MAX_PLAUSIBLE_RATIO) {
+            rebaseCalibration(decodeTokens);
+            return;
+          }
           if (rate.calibrateFromCounts(realDelta, estimatedDelta, at2)) {
-            lastRealDecode = decodeTokens;
-            lastEstimated = rate.estimatedTotal();
+            rebaseCalibration(decodeTokens);
             emit();
           }
           return;
         }
-        if (realDelta < 0) {
-          lastRealDecode = decodeTokens;
-          lastEstimated = rate.estimatedTotal();
-        }
+        if (realDelta < 0) rebaseCalibration(decodeTokens);
       },
       /** Manual reset from settings. Keeps the session counters intact. */
       resetCalibration() {
@@ -3930,6 +3947,8 @@
         lastRealDecode = 0;
         lastEstimated = 0;
         lastStatsKey = "";
+        previousDecodeMs = 0;
+        previousStatsAt = 0;
         emit();
       },
       /**
@@ -5251,7 +5270,7 @@
     const warnAt = clampPct2(vm.warnAt ?? 80);
     const ctx = clampPct2(vm.ctxValue || 0);
     const showSub = vm.sub !== false;
-    const state = vm.warn ? "red" : ctx >= warnAt - 10 ? "amber" : "green";
+    const state = vm.ctxKnown === false ? null : vm.warn ? "red" : ctx >= warnAt - 10 ? "amber" : "green";
     const arm = h2(
       "span",
       { className: "rgx-signal-armwrap rgx-mechanism" },
@@ -5365,10 +5384,10 @@
       if (staticMode) return void 0;
       const timer = setInterval(() => {
         if (typeof document !== "undefined" && document.hidden) return;
-        setSamples((previous) => [
-          ...previous.slice(-(COUNT - 1)),
-          latest.current
-        ]);
+        setSamples((previous) => {
+          if (latest.current === 0 && previous.length === COUNT && previous.every((value) => value === 0)) return previous;
+          return [...previous.slice(-(COUNT - 1)), latest.current];
+        });
       }, 250);
       return () => clearInterval(timer);
     }, [staticMode]);
@@ -5704,9 +5723,11 @@
       tps: Number(tps) || 0,
       displayTps: String(rounded),
       ctxValue: numericCtx ?? 0,
+      ctxKnown: numericCtx !== null,
       ctxText: numericCtx === null ? "—" : String(Math.round(numericCtx)),
       ctxDisplay: numericCtx === null ? "—" : `${Math.round(numericCtx)}%`,
       hitValue: numericHit ?? 0,
+      hitKnown: numericHit !== null,
       hitText,
       hitDisplay: hitText === "—" ? "—" : `${hitText}%`,
       warn: numericCtx !== null && numericCtx >= warnAt,
@@ -5944,9 +5965,11 @@
       tps: readout.tps,
       displayTps: String(readout.tps),
       ctxValue: ctxValue ?? 0,
+      ctxKnown: ctxValue !== null,
       ctxText,
       ctxDisplay,
       hitValue,
+      hitKnown: hitText !== "—",
       hitText,
       hitDisplay,
       warn: ctxValue !== null && ctxValue >= snapshot.warnAt,

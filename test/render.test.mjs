@@ -188,6 +188,15 @@ test('warning, over-range, DOM and stale stay visible on the new shell', () => {
   assert.match(stale, /class="rgx-quality"/);
 });
 
+test('an unknown CTX lights no signal lamp', () => {
+  const known = designRender('signal', { ctx: 20 });
+  assert.match(known, /rgx-signal-lamp is-on" data-lamp="green"/);
+
+  const unknown = designRender('signal', { ctx: null });
+  assert.doesNotMatch(unknown, /is-on/);
+  assert.match(unknown, /CTX[^<]*<\/span>[\s\S]*?—/);
+});
+
 test('the new shell is interactive when it is not a preview', () => {
   const html = designRender('vu', { placement: 'input' }, {
     onToggle: () => {},

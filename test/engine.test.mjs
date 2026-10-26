@@ -47,6 +47,36 @@ test('calibration uses host token deltas and resets on a session switch', () => 
   assert.ok(engine.getState().estimated > 0);
 });
 
+test('switching to a longer conversation rebases instead of sampling', () => {
+  const engine = createEngine();
+  engine.setStream({ ok: true });
+  engine.setStats({ decodeTokens: 1000, decodeMs: 5000 }, 1000);
+  engine.notePartial(blocks('hello world '.repeat(4)), 1100);
+  engine.setStats({ decodeTokens: 40000, decodeMs: 900000 }, 1200);
+  let calibration = engine.getCalibration();
+  assert.equal(calibration.samples, 0);
+  assert.equal(calibration.factor, 1);
+
+  // Decode observed after the switch still calibrates against the new totals.
+  engine.notePartial(blocks('hello world '.repeat(4) + '中'.repeat(40)), 2200);
+  engine.setStats({ decodeTokens: 40030, decodeMs: 900400 }, 2300);
+  calibration = engine.getCalibration();
+  assert.equal(calibration.samples, 1);
+  assert.ok(Math.abs(calibration.factor - 1.0625) < 1e-9);
+});
+
+test('an implausible token ratio is rejected rather than clamped', () => {
+  const engine = createEngine();
+  engine.setStream({ ok: true });
+  engine.setStats({ decodeTokens: 1000, decodeMs: 5000 }, 1000);
+  engine.notePartial(blocks('中'.repeat(20)), 1100);
+  // 12 estimated tokens against 600 host tokens in a plausible time window.
+  engine.setStats({ decodeTokens: 1600, decodeMs: 6000 }, 3000);
+  const calibration = engine.getCalibration();
+  assert.equal(calibration.samples, 0);
+  assert.equal(calibration.factor, 1);
+});
+
 test('a missing sessionStats projection is reported as unavailable', () => {
   const engine = createEngine();
   engine.setStats({ decodeTokens: 100, decodeMs: 1000 }, 1000);
