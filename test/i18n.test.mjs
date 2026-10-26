@@ -14,12 +14,14 @@ test('language resolution honours explicit preference then hints', () => {
 
 test('strings interpolate without throwing on missing values', () => {
   const zh = createT('zh');
-  assert.equal(zh('styleHeritage'), '经典仪表');
+  assert.equal(zh('placementInput'), '输入框上方');
   assert.equal(zh('samples', { n: 3 }), '3 样本');
   assert.equal(zh('scaleUnit', { n: 180 }), '180 tok/s');
+  assert.equal(zh('scaleTooltip', { n: 180 }), '满量程 180 tok/s');
   assert.equal(zh('missing-key'), 'missing-key');
 
   const en = createT('en');
   assert.equal(en('samples', { n: 2 }), '2 samples');
-  assert.equal(en('sourceDom'), 'DOM fallback');
+  assert.equal(en('sourceDom'), 'page text');
+  assert.equal(en('qualityDom'), 'Data comes from page text, not host stats');
 });

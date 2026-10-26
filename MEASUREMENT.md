@@ -1,7 +1,8 @@
 # Measurement contract
 
 Retro Dock is an instrument, so every number needs a stated method. This file is
-the contract; the UI is the display. The 1.2.0 classic dual dial uses all of it.
+the contract; the UI is the display. The 1.3.0 theme-aware classic dual dial
+uses all of it.
 
 | Reading | Source | Kind | Range |
 | --- | --- | --- | --- |
@@ -99,10 +100,11 @@ Calibration state is explicit:
 - **Projections available**: CTX/HIT are read directly; no DOM parsing.
 - **Projections missing**: CTX/HIT fall back to host-visible text. HIT accepts
   both `缓存命中` and `Cache hit` with up to eight non-digit characters before
-  the number. The tooltip names the source (`投影`, `混合`, `DOM 回退`).
+  the number. The gauge shows a `DOM` badge and the tooltip names the source
+  (`宿主统计`, `混合`, `页面文本`).
 - **Chat stream contract broken**: the meter fails closed — `data-stale="1"`,
-  the rate reads 0 and the tooltip says the source is unavailable — instead of
-  counting unrelated DOM mutations.
+  a `!` quality badge, the rate reads 0 and the tooltip says the source is
+  unavailable — instead of counting unrelated DOM mutations.
 - **No chat hook**: the meter may fall back to DOM observation. The observer is
   attached only while the stream is unavailable, ignores the composer, this
   plugin's own nodes and the first 750 ms after attach, and restarts the
@@ -128,7 +130,7 @@ Calibration state is explicit:
 
 ## Verification
 
-- `npm test` — 44 tests:
+- `npm test` — 49 tests:
   - measurement pure functions and host-compatible HIT formatting;
   - incremental stream counting, rewind/reset behaviour;
   - 1.2 s window, calibration deltas, bounds, generation/session resets;

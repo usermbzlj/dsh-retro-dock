@@ -1,7 +1,8 @@
 /**
- * Preference store. Owns placement, style, density, scale, warning threshold,
- * sub-dial visibility and language. One localStorage key, a validated snapshot,
- * and a subscription that React can consume through `useSyncExternalStore`.
+ * Preference store. Owns placement, density, full scale, warning threshold,
+ * sub-dial visibility and language. One localStorage key, a validated
+ * snapshot, and a subscription that React consumes with
+ * `useSyncExternalStore`.
  */
 
 import { DEFAULT_PREFS, normalizePrefs } from './themes.js';
@@ -19,7 +20,6 @@ const getDefaultStorage = () => {
 
 const samePrefs = (left, right) => (
   left.placement === right.placement
-  && left.style === right.style
   && left.density === right.density
   && left.scale === right.scale
   && left.warnAt === right.warnAt
@@ -47,7 +47,7 @@ export const createPrefs = (options = {}) => {
         return normalizePrefs(parsed);
       }
     } catch {
-      // Corrupt or unavailable storage falls through to a fresh snapshot.
+      // Corrupt or unavailable storage falls through to a migration attempt.
     }
     try {
       const legacy = storage?.getItem(legacyKey);

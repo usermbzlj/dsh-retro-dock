@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Retro Dock classic dual dial",
-    "description": "A classic dual-dial instrument: live tokens per second, context pressure and session cache hit, calibrated against host sessionStats, with preferences in the host settings page."
+    "description": "A theme-aware classic dual-dial instrument: live tokens per second, context pressure with a warning redline, and session cache hit, with visible data-source states."
   }
 }

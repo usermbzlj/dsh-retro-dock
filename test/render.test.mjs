@@ -6,7 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 import { bindReact } from '../src/runtime.js';
 import { createT } from '../src/i18n.js';
-import { ClassicGauge, createClassicVm } from '../src/ui/classic.js';
+import { ClassicGauge, ClassicPreview, createClassicVm } from '../src/ui/classic.js';
 
 bindReact(React, null);
 
@@ -25,7 +25,8 @@ test('the classic gauge renders the main dial, sub dial and readouts', () => {
   assert.match(html, /rg-arc-rate/);
   assert.match(html, /rg-arc-ctx/);
   assert.match(html, /rg-arc-hit/);
-  assert.match(html, />≈142</);
+  assert.match(html, /class="rg-approx"[^>]*>≈</);
+  assert.match(html, /class="rg-digits"[^>]*>142</);
   assert.match(html, />65</);
   assert.match(html, />99\.9%</);
 });
@@ -51,6 +52,27 @@ test('warning and stale states are attributes', () => {
   assert.match(html, /data-source="projection"/);
 });
 
+test('minimal warning gets colour plus a non-colour mark', () => {
+  const html = render(createClassicVm({ density: 'minimal', ctx: 85 }));
+  assert.match(html, /data-warn="1"/);
+  assert.match(html, /class="rg-alert"/);
+  assert.match(html, /CTX 85%/);
+});
+
+test('a DOM fallback gets a visible quality badge', () => {
+  const html = render({ ...createClassicVm(), source: 'dom' });
+  assert.match(html, /class="rg-quality"/);
+  assert.match(html, /data-quality="dom"/);
+  assert.match(html, />DOM</);
+  assert.match(html, /页面文本/);
+});
+
+test('the sub dial carries the warning redline at the configured threshold', () => {
+  const html = render(createClassicVm({ warnAt: 90, ctx: 95 }));
+  assert.match(html, /class="rg-redline"/);
+  assert.match(html, /rg-arc-ctx-warn/);
+});
+
 test('English strings drive the aria label', () => {
   const html = renderToStaticMarkup(React.createElement(ClassicGauge, {
     vm: createClassicVm(),
@@ -60,14 +82,17 @@ test('English strings drive the aria label', () => {
   assert.match(html, /cache hit 99\.9%/);
 });
 
-test('the interactive gauge is a button and has no settings gear', () => {
-  const html = render({ ...createClassicVm(), static: false }, {
+test('the interactive gauge is a button with an action label', () => {
+  const html = render({ ...createClassicVm({ placement: 'input' }), static: false }, {
     onToggle: () => {},
   });
   assert.match(html, /role="button"/);
   assert.match(html, /tabindex="0"/);
   assert.doesNotMatch(html, /rg-gear/);
-  assert.match(html, /aria-pressed="false"/);
+  assert.doesNotMatch(html, /aria-pressed/);
+  assert.match(html, /当前在输入框上方/);
+  assert.match(html, /切换到统计条/);
+  assert.match(html, /数据源 宿主统计/);
 });
 
 test('the static preview is inert and carries the needle position', () => {
@@ -76,4 +101,20 @@ test('the static preview is inert and carries the needle position', () => {
   assert.match(markup, /role="img"/);
   assert.match(markup, /--rg-p:/);
   assert.match(markup, /data-static="1"/);
+});
+
+test('the settings preview follows scale, placement, density and warning threshold', () => {
+  const markup = renderToStaticMarkup(React.createElement(ClassicPreview, {
+    placement: 'input',
+    density: 'minimal',
+    scale: 300,
+    warnAt: 90,
+    sub: false,
+    t,
+  }));
+  assert.match(markup, /data-variant="input"/);
+  assert.match(markup, /data-density="minimal"/);
+  assert.match(markup, /data-sub="0"/);
+  assert.match(markup, /满量程 300 tok\/s/);
+  assert.match(markup, /CTX 警戒 90%/);
 });

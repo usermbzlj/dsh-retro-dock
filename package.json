@@ -1,9 +1,9 @@
 {
   "name": "@local/retro-dock",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "type": "module",
-  "description": "Classic dual-dial instrument for DeepSeek Harness: live tokens/sec, context pressure and cache hit, with calibrated measurement and a host settings section.",
+  "description": "Theme-aware classic dual-dial instrument for DeepSeek Harness: live tokens/sec, context pressure and cache hit, with calibrated measurement and a host settings section.",
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node --test",
@@ -55,7 +55,7 @@
   "dshhub": {
     "schemaVersion": 1,
     "displayName": "Retro Dock — Composer Instrument Dials",
-    "summary": "Classic dual-dial instrument for the composer: live tokens per second, calibrated against host sessionStats, plus context pressure and cache hit.",
+    "summary": "Theme-aware classic dual-dial instrument for the composer: live tokens per second, calibrated against host stats, with a CTX warning redline, cache hit and visible data-source states.",
     "categories": [
       "Web UI",
       "观测"

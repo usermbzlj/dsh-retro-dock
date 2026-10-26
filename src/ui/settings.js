@@ -1,4 +1,4 @@
-/** Settings popover and the full `settings.section` page. */
+/** Full `settings.section` page. The popover is gone; preferences live here. */
 
 import { R } from '../runtime.js';
 import { prefs } from '../prefs.js';
@@ -6,7 +6,6 @@ import { engine } from '../engine.js';
 import { SCALES, WARN_LEVELS } from '../themes.js';
 import { createT } from '../i18n.js';
 import { usePrefs, useEngineVersion, useLang } from './hooks.js';
-import { CloseIcon } from './icons.js';
 import { ClassicPreview } from './classic.js';
 import { VERSION } from '../version.js';
 
@@ -42,11 +41,11 @@ const Switch = ({ checked, onChange, label }) => h('div', { className: 'rg-switc
 
 /**
  * All controls. Subscribes to prefs and to engine state so the calibration
- * status is live; safe to render twice (popover + settings page).
+ * status is live.
  *
- * @param {{ t: Function, detailed?: boolean }} props
+ * @param {{ t: Function }} props
  */
-export const SettingsControls = ({ t, detailed = false }) => {
+export const SettingsControls = ({ t }) => {
   const snapshot = usePrefs();
   useEngineVersion();
   const calibration = engine.getCalibration();
@@ -71,7 +70,7 @@ export const SettingsControls = ({ t, detailed = false }) => {
           { value: 'dock', label: t('placementDock') },
         ],
       })),
-    h(Field, { label: t('densityTitle'), hint: detailed ? t('densityHint') : null },
+    h(Field, { label: t('densityTitle'), hint: t('densityHint') },
       h(Seg, {
         value: snapshot.density,
         label: t('densityTitle'),
@@ -123,101 +122,17 @@ export const SettingsControls = ({ t, detailed = false }) => {
         }, t('resetCalibration')))));
 };
 
-/**
- * Anchored popover. Portaled to body so the composer's overflow cannot clip it.
- *
- * @param {{
- *   anchorRef: object,
- *   open: boolean,
- *   onClose: Function,
- *   t: Function,
- * }} props
- */
-export const SettingsPopover = ({ anchorRef, open, onClose, t }) => {
-  const panelRef = R.useRef(null);
-  const closeRef = R.useRef(onClose);
-  const [position, setPosition] = R.useState(null);
-  closeRef.current = onClose;
-
-  R.useLayoutEffect(() => {
-    if (!open || typeof window === 'undefined') return undefined;
-    const panel = panelRef.current;
-    const anchor = anchorRef.current;
-    if (!panel || !anchor) return undefined;
-
-    const place = () => {
-      const rect = anchor.getBoundingClientRect();
-      const width = panel.offsetWidth || 318;
-      const height = panel.offsetHeight || 320;
-      const margin = 12;
-      const left = Math.min(
-        Math.max(margin, rect.right - width),
-        Math.max(margin, window.innerWidth - width - margin),
-      );
-      let top = rect.bottom + 8;
-      if (top + height > window.innerHeight - margin) {
-        top = Math.max(margin, rect.top - height - 8);
-      }
-      setPosition({ left, top, visibility: 'visible' });
-    };
-
-    place();
-    panel.focus({ preventScroll: true });
-    window.addEventListener('resize', place);
-    window.addEventListener('scroll', place, true);
-
-    const onPointerDown = (event) => {
-      if (panel.contains(event.target) || anchor.contains(event.target)) return;
-      closeRef.current();
-    };
-    const onKeyDown = (event) => {
-      if (event.key !== 'Escape') return;
-      event.preventDefault();
-      closeRef.current();
-    };
-    document.addEventListener('pointerdown', onPointerDown, true);
-    document.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      window.removeEventListener('resize', place);
-      window.removeEventListener('scroll', place, true);
-      document.removeEventListener('pointerdown', onPointerDown, true);
-      document.removeEventListener('keydown', onKeyDown);
-      if (typeof anchor.focus === 'function') anchor.focus({ preventScroll: true });
-    };
-  }, [open, anchorRef]);
-
-  if (!open) return null;
-
-  const panel = h('div', {
-    ref: panelRef,
-    className: 'rg-settings-popover',
-    role: 'dialog',
-    'aria-label': t('settingsTitle'),
-    tabIndex: -1,
-    style: position ?? { left: 0, top: 0, visibility: 'hidden' },
-  },
-  h('div', { className: 'rg-settings-head' },
-    h('div', null,
-      h('h2', { className: 'rg-settings-title' },
-        t('appName'),
-        h('span', { className: 'rg-settings-version' }, ` v${VERSION}`)),
-      h('p', { className: 'rg-settings-sub' }, t('settingsSubtitle'))),
-    h('button', {
-      type: 'button',
-      className: 'rg-settings-close',
-      'aria-label': t('close'),
-      title: t('close'),
-      onClick: () => closeRef.current(),
-    }, h(CloseIcon))),
-  h(SettingsControls, { t }));
-
-  return R.createPortal ? R.createPortal(panel, document.body) : panel;
+const densityLabel = (density, t) => {
+  if (density === 'compact') return t('densityCompact');
+  if (density === 'minimal') return t('densityMinimal');
+  return t('densityFull');
 };
 
 /**
- * Host `settings.section` page: the same controls at full width plus live
- * previews of the current style at two densities.
+ * Host `settings.section` page: controls at full-page scale plus previews of
+ * the current settings and the alternate density. Preview readings are
+ * explicitly examples; the geometry, scale, warning line and sub-switch are
+ * the real ones.
  */
 export const SettingsSection = () => {
   const snapshot = usePrefs();
@@ -225,25 +140,38 @@ export const SettingsSection = () => {
   const t = R.useMemo(() => createT(lang), [lang]);
   useEngineVersion();
 
+  const currentDensity = snapshot.density === 'auto' ? 'full' : snapshot.density;
+  const alternateDensity = currentDensity === 'minimal' ? 'full' : 'minimal';
+  const placementLabel = snapshot.placement === 'input' ? t('placementInput') : t('placementDock');
+  const currentDensityLabel = snapshot.density === 'auto'
+    ? `${t('densityAuto')} (${t('densityFull')})`
+    : densityLabel(currentDensity, t);
+
+  const preview = (density, label, densityText) => h('div', { className: 'rg-preview-block' },
+    h('div', { className: 'rg-preview-label' },
+      h('span', null, label),
+      h('span', { className: 'rg-preview-meta' }, `${placementLabel} / ${densityText}`)),
+    h('div', { className: 'rg-preview-stage' },
+      h(ClassicPreview, {
+        placement: snapshot.placement,
+        density,
+        scale: snapshot.scale,
+        warnAt: snapshot.warnAt,
+        sub: snapshot.sub,
+        t,
+      })));
+
   return h('div', { className: 'rg-settings-page' },
     h('div', { className: 'rg-settings-page-head' },
       h('h3', null, t('appName')),
       h('p', null, t('settingsSubtitle'))),
     h('div', { className: 'rg-settings-grid' },
       h('div', { className: 'rg-settings-panel' },
-        h(SettingsControls, { t, detailed: true })),
+        h(SettingsControls, { t })),
       h('aside', { className: 'rg-settings-preview' },
-        h('div', { className: 'rg-preview-label' },
-          h('span', null, t('previewTitle')),
-          h('span', { className: 'rg-sep' }, '·'),
-          h('span', null, t('densityFull'))),
-        h('div', { className: 'rg-preview-stage' },
-          h(ClassicPreview, { density: 'full', placement: 'dock', t })),
-        h('div', { className: 'rg-preview-label' },
-          h('span', null, t('densityMinimal'))),
-        h('div', { className: 'rg-preview-stage' },
-          h(ClassicPreview, { density: 'minimal', placement: 'dock', t })),
+        preview(currentDensity, t('previewCurrent'), currentDensityLabel),
+        preview(alternateDensity, t('previewExample'), densityLabel(alternateDensity, t)),
         h('p', { className: 'rg-preview-caption' }, t('previewHint')),
-        h('p', { className: 'rg-preview-caption' }, t('version', { version: VERSION })))),
+        h('p', { className: 'rg-preview-caption rg-preview-version' }, t('version', { version: VERSION })))),
     h('p', { className: 'rg-notice' }, t('notice')));
 };

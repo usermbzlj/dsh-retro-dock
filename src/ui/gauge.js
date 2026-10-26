@@ -164,6 +164,7 @@ export const createGauge = (variant) => function GaugeSlot(props) {
     hitText,
     hitDisplay,
     warn: ctxValue !== null && ctxValue >= snapshot.warnAt,
+    warnAt: snapshot.warnAt,
     stale: engine.isStreamBroken(),
     sub: snapshot.sub,
     static: false,

@@ -1,4 +1,4 @@
-/** Build the static style gallery used for docs screenshots. */
+/** Build the static README specimen sheet used for docs screenshots. */
 
 import { build } from 'esbuild';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -32,7 +32,7 @@ await writeFile(path.join(docs, 'gallery.html'), `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Retro Dock · style study</title>
+<title>Retro Dock · specimen sheet</title>
 <style>html,body{margin:0}</style>
 </head>
 <body>

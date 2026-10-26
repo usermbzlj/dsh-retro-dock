@@ -32,7 +32,6 @@ test('preferences persist and validate across instances', () => {
   const store = createPrefs({ storage });
   store.set({
     placement: 'input',
-    style: 'neon',
     density: 'compact',
     scale: 240,
     warnAt: 90,
@@ -40,12 +39,11 @@ test('preferences persist and validate across instances', () => {
     lang: 'en',
   });
   const raw = JSON.parse(storage.getItem(PREFS_KEY));
-  assert.equal(raw.style, 'neon');
   assert.equal(raw.scale, 240);
+  assert.equal(raw.density, 'compact');
 
   const restored = createPrefs({ storage }).getSnapshot();
   assert.equal(restored.placement, 'input');
-  assert.equal(restored.style, 'neon');
   assert.equal(restored.density, 'compact');
   assert.equal(restored.scale, 240);
   assert.equal(restored.warnAt, 90);
@@ -53,11 +51,18 @@ test('preferences persist and validate across instances', () => {
   assert.equal(restored.lang, 'en');
 });
 
+test('the retired 1.1.0 style value is dropped', () => {
+  const storage = new MemoryStorage();
+  storage.setItem(PREFS_KEY, JSON.stringify({ placement: 'input', style: 'neon' }));
+  const snapshot = createPrefs({ storage }).getSnapshot();
+  assert.equal(snapshot.placement, 'input');
+  assert.equal('style' in snapshot, false);
+});
+
 test('unknown or out-of-range values fall back safely', () => {
   const storage = new MemoryStorage();
   storage.setItem(PREFS_KEY, JSON.stringify({
     placement: 'sidebar',
-    style: 'nope',
     density: 'tiny',
     scale: 999,
     warnAt: 12,
@@ -66,7 +71,6 @@ test('unknown or out-of-range values fall back safely', () => {
   }));
   const snapshot = createPrefs({ storage }).getSnapshot();
   assert.equal(snapshot.placement, DEFAULT_PREFS.placement);
-  assert.equal(snapshot.style, DEFAULT_PREFS.style);
   assert.equal(snapshot.density, DEFAULT_PREFS.density);
   assert.equal(snapshot.scale, DEFAULT_PREFS.scale);
   assert.equal(snapshot.warnAt, DEFAULT_PREFS.warnAt);
@@ -86,11 +90,11 @@ test('the old placement key migrates once and is removed', () => {
 test('subscribers see each change and no-op writes stay quiet', () => {
   const store = createPrefs({ storage: new MemoryStorage() });
   const seen = [];
-  const unsubscribe = store.subscribe((snapshot) => seen.push(snapshot.style));
-  store.set({ style: 'terminal' });
-  store.set({ style: 'terminal' });
-  store.set({ style: 'minimal' });
+  const unsubscribe = store.subscribe((snapshot) => seen.push(snapshot.density));
+  store.set({ density: 'compact' });
+  store.set({ density: 'compact' });
+  store.set({ density: 'minimal' });
   unsubscribe();
-  store.set({ style: 'neon' });
-  assert.deepEqual(seen, ['terminal', 'minimal']);
+  store.set({ density: 'full' });
+  assert.deepEqual(seen, ['compact', 'minimal']);
 });
