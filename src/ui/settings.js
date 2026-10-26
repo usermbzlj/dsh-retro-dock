@@ -3,10 +3,12 @@
 import { R } from '../runtime.js';
 import { prefs } from '../prefs.js';
 import { engine } from '../engine.js';
-import { SCALES, WARN_LEVELS } from '../themes.js';
+import { STYLES, SCALES, WARN_LEVELS } from '../themes.js';
+import { DESIGN_META } from '../designs/meta.js';
 import { createT } from '../i18n.js';
 import { usePrefs, useEngineVersion, useLang } from './hooks.js';
 import { ClassicPreview } from './classic.js';
+import { DesignPreview } from './design-gauge.js';
 import { VERSION } from '../version.js';
 
 const h = (...args) => R.h(...args);
@@ -39,13 +41,61 @@ const Switch = ({ checked, onChange, label }) => h('div', { className: 'rg-switc
     onClick: () => onChange(!checked),
   }));
 
+const styleName = (id, lang, t) => (
+  id === 'classic' ? t('styleClassic') : DESIGN_META[id]?.name?.[lang] ?? id
+);
+
+const styleEnglish = (id) => (
+  id === 'classic' ? 'Classic' : DESIGN_META[id]?.name?.en ?? id
+);
+
+const StyleOption = ({ id, selected, lang, t, onSelect, scale, warnAt, sub }) => {
+  const Preview = id === 'classic' ? ClassicPreview : DesignPreview;
+  return h('button', {
+    type: 'button',
+    className: selected ? 'rg-style-option is-selected' : 'rg-style-option',
+    'aria-pressed': String(selected),
+    'aria-label': `${styleName(id, lang, t)} ${styleEnglish(id)}`,
+    onClick: () => onSelect(id),
+  },
+  h('span', { className: 'rg-style-stage', 'aria-hidden': 'true' },
+    h(Preview, {
+      style: id,
+      placement: 'dock',
+      density: 'full',
+      scale,
+      warnAt,
+      sub,
+      t,
+    })),
+  h('span', { className: 'rg-style-copy' },
+    h('span', { className: 'rg-style-name' }, styleName(id, lang, t)),
+    h('span', { className: 'rg-style-en' }, styleEnglish(id))));
+};
+
+const StylePicker = ({ value, lang, t, onChange, scale, warnAt, sub }) => h('div', {
+  className: 'rg-style-grid',
+  role: 'group',
+  'aria-label': t('styleTitle'),
+}, STYLES.map((id) => h(StyleOption, {
+  key: id,
+  id,
+  selected: value === id,
+  lang,
+  t,
+  onSelect: onChange,
+  scale,
+  warnAt,
+  sub,
+})));
+
 /**
  * All controls. Subscribes to prefs and to engine state so the calibration
  * status is live.
  *
- * @param {{ t: Function }} props
+ * @param {{ t: Function, lang: 'zh'|'en' }} props
  */
-export const SettingsControls = ({ t }) => {
+export const SettingsControls = ({ t, lang }) => {
   const snapshot = usePrefs();
   useEngineVersion();
   const calibration = engine.getCalibration();
@@ -60,6 +110,16 @@ export const SettingsControls = ({ t }) => {
   const set = (patch) => prefs.set(patch);
 
   return h('div', { className: 'rg-controls' },
+    h(Field, { label: t('styleTitle'), hint: t('styleHint') },
+      h(StylePicker, {
+        value: snapshot.style,
+        lang,
+        t,
+        scale: snapshot.scale,
+        warnAt: snapshot.warnAt,
+        sub: snapshot.sub,
+        onChange: (style) => set({ style }),
+      })),
     h(Field, { label: t('placementTitle') },
       h(Seg, {
         value: snapshot.placement,
@@ -140,19 +200,22 @@ export const SettingsSection = () => {
   const t = R.useMemo(() => createT(lang), [lang]);
   useEngineVersion();
 
+  const Preview = snapshot.style === 'classic' ? ClassicPreview : DesignPreview;
   const currentDensity = snapshot.density === 'auto' ? 'full' : snapshot.density;
   const alternateDensity = currentDensity === 'minimal' ? 'full' : 'minimal';
   const placementLabel = snapshot.placement === 'input' ? t('placementInput') : t('placementDock');
   const currentDensityLabel = snapshot.density === 'auto'
     ? `${t('densityAuto')} (${t('densityFull')})`
     : densityLabel(currentDensity, t);
+  const currentStyleLabel = styleName(snapshot.style, lang, t);
 
   const preview = (density, label, densityText) => h('div', { className: 'rg-preview-block' },
     h('div', { className: 'rg-preview-label' },
       h('span', null, label),
-      h('span', { className: 'rg-preview-meta' }, `${placementLabel} / ${densityText}`)),
+      h('span', { className: 'rg-preview-meta' }, `${currentStyleLabel} / ${placementLabel} / ${densityText}`)),
     h('div', { className: 'rg-preview-stage' },
-      h(ClassicPreview, {
+      h(Preview, {
+        style: snapshot.style,
         placement: snapshot.placement,
         density,
         scale: snapshot.scale,
@@ -167,11 +230,12 @@ export const SettingsSection = () => {
       h('p', null, t('settingsSubtitle'))),
     h('div', { className: 'rg-settings-grid' },
       h('div', { className: 'rg-settings-panel' },
-        h(SettingsControls, { t })),
+        h(SettingsControls, { t, lang })),
       h('aside', { className: 'rg-settings-preview' },
         preview(currentDensity, t('previewCurrent'), currentDensityLabel),
         preview(alternateDensity, t('previewExample'), densityLabel(alternateDensity, t)),
-        h('p', { className: 'rg-preview-caption' }, t('previewHint')),
-        h('p', { className: 'rg-preview-caption rg-preview-version' }, t('version', { version: VERSION })))),
+        h('div', { className: 'rg-preview-foot' },
+          h('p', { className: 'rg-preview-caption' }, t('previewHint')),
+          h('p', { className: 'rg-preview-caption rg-preview-version' }, t('version', { version: VERSION }))))),
     h('p', { className: 'rg-notice' }, t('notice')));
 };

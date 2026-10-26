@@ -25,6 +25,7 @@ import {
   getMeterReadout,
 } from './hooks.js';
 import { ClassicGauge } from './classic.js';
+import { DesignGauge } from './design-gauge.js';
 import { readContextPressure, readCacheHit } from './read-dom.js';
 
 const h = (...args) => R.h(...args);
@@ -66,7 +67,7 @@ export const createGauge = (variant) => function GaugeSlot(props) {
   const projectedCtx = contextPercent(pressure);
   const projectedHit = cacheHitPercent(usage);
 
-  useMeterLoop({ active, rootRef, scale: snapshot.scale, onReadout: setReadout });
+  useMeterLoop({ active, rootRef, scale: snapshot.scale, style: snapshot.style, onReadout: setReadout });
 
   R.useEffect(() => {
     if (!active) return;
@@ -152,6 +153,7 @@ export const createGauge = (variant) => function GaugeSlot(props) {
         : t('notCalibrated');
 
   const vm = {
+    style: snapshot.style,
     density,
     placement: variant,
     live: readout.live,
@@ -175,7 +177,8 @@ export const createGauge = (variant) => function GaugeSlot(props) {
     revision,
   };
 
-  return h(ClassicGauge, {
+  const GaugeView = snapshot.style === 'classic' ? ClassicGauge : DesignGauge;
+  return h(GaugeView, {
     vm,
     t,
     rootRef,

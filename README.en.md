@@ -1,94 +1,156 @@
 # DSH Retro Dock
 
-A dual-dial instrument for the DeepSeek Harness composer: live tokens per second on the main dial, context pressure and session cache hit on the sub dial. 1.3.0 keeps the classic dials and adds a light theme, a warning redline, visible data-quality states, and a full-page settings section.
+A composer instrument for DeepSeek Harness: live tokens per second, context pressure and session cache hit. 1.4.0 keeps the classic dual dial and adds seven selectable measuring languages: Bench, Broadcast VU, Altimeter, Signal, Chart, Swiss and Compass. Pick one under **Settings → Retro Dock → Style**; the classic dual dial remains the default.
+
+![Seven measuring languages](docs/seven-languages-hero.jpg)
 
 ![Classic dual dial · dark](docs/classic-dark-en.jpg)
 
 ![Classic dual dial · light](docs/classic-light-en.jpg)
 
-> [Settings · dark](docs/settings-dark-en.jpg) · [Settings · light](docs/settings-light-en.jpg) · [Measurement contract](MEASUREMENT.md) · [Changelog](CHANGELOG.md) · [中文](README.md)
+> [Seven instruments · design study](docs/seven-designs.md) · [Settings · dark](docs/settings-dark-en.jpg) · [Settings · light](docs/settings-light-en.jpg) · [Measurement contract](MEASUREMENT.md) · [Changelog](CHANGELOG.md) · [中文](README.md)
 
-## Look
+## Seven measuring languages
 
-- **Main dial**: 240° sweep, ticks at 0 / 60 / 120 / 180 with a heavier full-scale tick, and a tapered needle. 0–180 tok/s by default; configurable 120 / 240 / 300. Past full scale the needle stops and the ring enters a cyan overspeed glow while the number keeps rising; the tooltip names the full scale.
-- **Sub dial**: 38px dual rings at the full input density. CTX stays neutral below its warning threshold and gets a redline at `warnAt`; past the line the arc segment, number and `!` turn caution-coloured. HIT stays cyan so the two meanings do not share a hue.
-- **Placement**: click the gauge to move between the composer and the stats bar; hover / focus draws a quiet housing outline; the choice persists.
-- **Density**: composer full / compact / minimal at 860 / 620; stats bar full / minimal at 560. Minimal folds the sub dial into `CTX · HIT`; a warning still turns the CTX item caution-coloured and adds `!`.
-- **Theme**: the instrument follows the host light/dark theme; settings follow host tokens. Light uses dark ink and a deeper blue / ochre / teal instead of pretending the host is still dark.
-- **Data quality**: a page-text fallback shows a `DOM` badge; unavailable data shows `!`, dims the dials and keeps the readings legible. The aria-label and tooltip both name the source.
-- No style switcher and no gear button. Preferences live in host Settings → Retro Dock.
+| Style | Mechanism | Best for |
+| --- | --- | --- |
+| **Bench** | 240° scale, knife needle, recessed CTX bar | Precision and quiet; works in light and dark |
+| **Broadcast VU** | 130° fan, wedge needle, printed red zone | Long sessions; warm and physical |
+| **Altimeter** | 270° needle, three-digit drum window | Digits first |
+| **Signal** | Semaphore arm, three state lamps, counter | Seeing the warning state before the number |
+| **Chart** | Twenty-second paper trace, pen dot, pressure bar | Watching the trend during long generations |
+| **Swiss** | Number, hairline rule, square cursor | The quietest option: no machine, just a reading |
+| **Compass** | Rotating card, brass bezel, fixed lubber line | An object that moves without asking for attention |
+
+The classic dual dial is the eighth option and the default. All eight share one `vm`, one calibration path and one set of state flags (live / warn / over / stale / DOM); a style changes the mechanism, not the measurement. Each was checked at the real 56px composer slot and 42px stats bar, with full / compact / minimal densities.
+
+The settings picker shows eight real 42px previews; the preview follows position, density, full scale, warning threshold and the sub-readout switch. Inside the host's 800px settings panel the page is a single-column form with a two-up preview; wide hosts keep the side preview. `npm run catalogue` generates the interactive catalogue at `docs/catalogue.html`; the written study is [docs/seven-designs.md](docs/seven-designs.md).
+
+## Appearance
+
+- **Classic main dial**: 240° scale, four ticks with a heavier end tick, tapered needle. Default full scale 180 tok/s, configurable to 120 / 240 / 300. Past full scale the needle rests at the stop, the ring turns cyan and the number keeps rising; the tooltip names the full scale.
+- **Classic sub dial**: a 38px dual ring at full composer density. CTX is neutral below the threshold, with a redline printed at the threshold; past it the overrun arc, the number and `!` turn caution. HIT stays cyan so it never reads as a warning.
+- **Seven styles**: Bench, VU, Altimeter, Signal, Chart, Swiss, Compass. Each has its own mechanism, surface, type and motion; red is reserved for limits. See the [design study](docs/seven-designs.md).
+- **Placement**: click the instrument to move it between above-composer and the stats bar; hover/focus draws a quiet outline; the choice persists.
+- **Density**: composer full / compact / minimal at 860 / 620; stats bar full / minimal at 560. Minimal folds the instrument into one line; a CTX warning keeps its colour and `!`.
+- **Theme**: follows the host. Bench, Altimeter, Signal and Chart own dark surfaces in the dark theme; the VU stays a warm lit face; Swiss borrows the host's ink and paper completely; Compass only lets its readout follow the host — the card remains its own object.
+- **Data quality**: page-text fallback shows a `DOM` badge; unavailable data shows `!`; the mechanism recedes while readings stay legible. Source and warning are in the aria-label and tooltip.
+- No gear button or popover inside the instrument. Style and preferences live in the host settings section.
 
 ## Features
 
-- **Rate**: 1.2 s window, incremental stream counting, calibrated against host `sessionStats` token deltas (factor bounded 0.4–2.5). `≈` has a fixed slot, so live / idle does not shift the centred gauge.
-- **CTX / HIT**: host `contextPressure` and `tokenUsage`, with the host's exact cache-hit formatting.
-- **Settings**: placement, density, full scale, CTX warning threshold, sub-readout switch, language and calibration reset. Full-page controls; previews use the current scale, warning line and placement, and example readings are labelled as examples.
-- **Language**: Chinese / English / follow host, including tooltips, aria and settings.
-- **Performance**: rAF stops when idle; the DOM observer is detached while the chat stream is available; density uses a ResizeObserver.
-- **Privacy**: no network requests, no credential access; one preference key. `window.__retroDock` is a debug mirror.
+- **Rate**: live tok/s with `≈`. 1.2s sliding window, incremental stream counting, calibration against host `sessionStats` with a 0.4–2.5 multiplier. The `≈` has a fixed slot so live/idle never shifts the centred instrument.
+- **CTX / HIT**: current context pressure and whole-session cache hit. HIT keeps the host's precision and never rounds a partial hit to 100%.
+- **Styles**: eight options (classic plus seven measuring languages); 42px real previews in settings; switching applies immediately.
+- **Settings**: style, placement, density, full scale, CTX warning, sub-readout switch, language, calibration reset. Full-page controls; the preview uses the current scale, warning line and placement, and labels example readings as examples.
+- **Language**: Chinese / English / follow host; tooltip, aria and settings are bilingual.
+- **Performance**: idle rAF stop; no DOM observer while a stream is active; O(delta) counting; ResizeObserver density; only the Chart style records a 20s trace at 4Hz while selected, paused when the page is hidden.
+- **Privacy**: no network requests, no credentials; one preference key. `window.__retroDock` is a debug mirror.
 
 ## Install
 
-Check the profile first: `dsh web` uses `web`; the desktop app uses `desktop`.
+Confirm the profile first: `dsh web` uses the `web` profile; the desktop app uses `desktop`.
+
+**DSH Web**
 
 ```bash
 npx @deepseek-ai/dsh plugin --profile web add github:usermbzlj/dsh-retro-dock
 ```
 
-Desktop:
+**Desktop app**
 
 ```bash
 cd ~/.dsh/profiles/desktop
 pnpm add github:usermbzlj/dsh-retro-dock
 ```
 
-Confirm `dsh.profile.bundles` in the profile contains `@local/retro-dock`, then restart DSH. Local package: `npm pack` (1.3.0).
+After installing, check that `~/.dsh/profiles/<profile>/package.json` has `@local/retro-dock` in `dsh.profile.bundles`; add it manually if the CLI did not, then restart DSH.
 
-> The 1.1.0 four-style release remains available as history; current `main` is the 1.3.0 theme-aware classic gauge.
+**Local tarball**
+
+```bash
+npm pack   # local-retro-dock-1.4.0.tgz
+```
+
+> The 1.1.0 four-style release remains available from the tag / Release. `main` is 1.4.0: classic plus seven measuring languages.
 
 ## Interaction
 
-- Click the gauge to toggle placement.
-- Keyboard: focus the gauge, then `Enter` / `Space`.
-- Settings: host Settings → Retro Dock (no in-gauge gear or popover).
-- Preference key: `dsh-retro-dock:prefs:v2`; legacy `rg-gauge-placement` migrates automatically, and the retired 1.1.0 `style` field is dropped.
+- Click the instrument to move it between the composer slot and the stats bar.
+- Keyboard: Tab to the instrument, then `Enter` / `Space` to move it.
+- Settings: **Settings → Retro Dock**; style, placement, density, full scale, CTX warning, sub-readouts, language and calibration. No gear or popover in the gauge.
+- Preference key: `dsh-retro-dock:prefs:v3`; `v2` is migrated and removed. Retired 1.1.0 style values (`neon` / `minimal` / `terminal`) are not new ids and normalise back to `classic`; the old `rg-gauge-placement` key still migrates.
+- Old 1.1.0 style values do not silently become a new language; this is deliberate — they have no one-to-one successor.
 
-## Measurement
+## Data sources and measurement contract
 
-Priority: host projections (`contextPressure`, `tokenUsage`, `sessionStats`) → chat store (`useChat(s => s.legacy.partial)`, model output only) → page-text fallback (marked on the gauge with `DOM`, and named in the tooltip and aria label).
+Highest priority first:
 
-The rate is an estimate plus calibration, not server-side token accounting. The tooltip shows the calibration factor/samples, full scale, warning line and data source; the settings page shows calibration status. See [MEASUREMENT.md](MEASUREMENT.md).
+1. Host projections: `contextPressure`, `tokenUsage`, `sessionStats`.
+2. Chat store: `useChat(s => s.legacy.partial)`, counting model output fields only.
+3. Page-text fallback: when projections are missing, read visible host text; the instrument shows a `DOM` badge and the tooltip/aria name the source.
+
+Rate is an **estimate plus calibration**, not server-side per-chunk token counting. The tooltip shows the calibration factor/samples, full scale, warning line and source; settings show calibration state. The full formula and failure conditions are in [MEASUREMENT.md](MEASUREMENT.md).
+
+All seven languages read the same data. The Chart trace only records samples after it mounts; it never invents the left half of the paper.
 
 ## Compatibility
 
 - Platform: web (Chromium).
-- Host: `dsh >= 0.2.0-rc.1 < 0.3.0`; developed against `0.2.1-rc.3`.
-- Theme: follows `[data-ds-dark-theme]` and host tokens; light and dark are both supported.
-- Known limits: calibration needs `sessionStats`; the page-text fallback is less trustworthy; a real-session trace is still pending.
+- Host: `dsh >= 0.2.0-rc.1 < 0.3.0`; currently verified on `0.2.1-rc.3`.
+- Theme: follows `[data-ds-dark-theme]` and host tokens; light and dark both work.
+- Known limits: calibration is unavailable without `sessionStats`; page-text fallback is less trustworthy than host projections; live precision still needs a real session trace. The live feel of the seven new styles also needs a real stream.
 
 ## Development
 
 ```bash
 npm install
-npm run build      # bundles src/ into client.js
-npm test           # 49 tests
-npm run preview    # builds docs/gallery.html specimen sheet
+npm run build      # src/ -> client.js
+npm test           # 56 tests
+npm run preview    # docs/gallery.html (classic specimens + settings)
+npm run catalogue  # docs/catalogue.html (seven-language catalogue)
 npm run shots      # needs Chromium: npx playwright install chromium
+npm run catalogue:shots  # also writes docs/seven-languages*.jpg
 ```
 
-`client.js` is generated. Source: `measure.js`, `stream.js`, `rate.js`, `engine.js`, `prefs.js`, `i18n.js`, `ui/classic.js`, `ui/gauge.js`, `ui/settings.js`, `styles/`. Tests cover measurement, incremental counting, calibration, preference migration (including dropping 1.1.0 `style`), i18n, classic gauge SSR / warning / data-source / preview states, jsdom mount/stream/placement, and the built bundle contract. CI builds, checks `client.js`, and runs the suite.
+`client.js` is a build artifact; do not edit it by hand. Source layout:
+
+```
+src/measure.js        pure measurement helpers
+src/stream.js         incremental stream counting
+src/rate.js           1.2s window, smoothing, calibration
+src/engine.js         process-level engine
+src/prefs.js          preference store, v3/v2/legacy migration
+src/themes.js         style, density, scale and warning validation
+src/designs/meta.js   metadata for the seven languages
+src/i18n.js           Chinese/English strings
+src/ui/classic.js     classic dual dial
+src/ui/design-gauge.js shared shell for the seven (semantics, states, minimal line)
+src/ui/designs/       the seven mechanisms: bench / vu / altimeter / signal / chart / swiss / compass
+src/ui/gauge.js       slot component and state wiring
+src/ui/settings.js    host settings page with the style picker
+src/styles/classic.js
+src/styles/designs/   seven styles + shared shell CSS
+src/styles/settings.js
+scripts/              build / gallery / catalogue / shots
+```
+
+Tests cover pure measurement, incremental counting, window/calibration, preference migration (v3/v2, retired style fallback, old key), i18n, classic SSR / warning / source / preview states, SSR of all seven mechanisms, the settings preview, jsdom mount/stream/style switch/placement, and the built bundle's ModuleLoader contract. CI runs `npm ci`, rebuilds, verifies `client.js` and runs the tests.
 
 ## Verification
 
-- 49/49 tests pass; the classic gauge and settings page are rendered in Chromium and screenshotted across dark/light × zh/en (`docs/classic-*.jpg`, `docs/settings-*.jpg`).
-- A real-session trace has not been captured yet. After a refresh, the tooltip should show `Source host stats`; if it shows `page text` or stays at “Waiting for host stats”, please report the tooltip text and host version.
-- The real light-theme host composer has not been compared side by side; light metrics come from the specimen sheet and source token measurements.
+- Automation: 56/56 pass; the classic gauge, all seven new mechanisms and the settings style picker render in Chromium.
+- Catalogue: `docs/catalogue.html` renders at 1440px with 91 real 1× instrument instances; light/dark hosts, six states, 2× craft details and a minimal-density comparison are in the page.
+- Contrast: primary and secondary text is ≥4.5:1; arcs, needles, lamps and limit marks are ≥3:1. The light Signal amber was deepened to 4.3:1; the light Altimeter limit red to 5.0:1.
+- Real host: no real-session trace yet. After a refresh/restart the tooltip should say `数据源 宿主统计`; if it says `页面文本` or stays on "waiting for host stats", please report the tooltip text and host version.
+- Live feel of the seven new styles (needle damping, drum roll, compass card, chart stepping) has not been individually verified in a real stream; static 1× and 2× are verified.
 
-## Version note
+## Versions
 
-- **1.3.0**: theme-aware instrument (legible in light), CTX warning redline, minimal warning state, visible page-text/stale markers, fixed `≈` slot, full-page settings section with truthful previews, README specimen sheet; removed the 1.1.0 leftover styles/components and the `style` preference.
-- **1.2.0**: restored the pre-1.1.0 classic dual dial; kept the 1.1.0 measurement, calibration, performance and settings data layer.
-- **1.1.0**: four-style release, retained as a tag and GitHub Release.
+- **1.4.0**: seven selectable measuring languages (Bench, VU, Altimeter, Signal, Chart, Swiss, Compass) plus the classic dual dial; style picker in settings; `prefs:v3` with v2 migration; shared shell, states and minimal line; design study and catalogue.
+- **1.3.0**: theme-aware classic dial (light readable), CTX redline, minimal warning, visible source/stale states, fixed `≈` slot, full-page settings with truthful previews, new README specimens; removed the 1.1.0 layer and `style` preference.
+- **1.2.0**: restored the pre-1.1.0 classic dual dial as the only gauge, keeping measurement/calibration/performance and the settings data layer.
+- **1.1.0**: four-style release, preserved in the tag and Release for reference.
 
 ## License
 

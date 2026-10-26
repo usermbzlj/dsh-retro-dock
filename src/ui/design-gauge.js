@@ -1,0 +1,147 @@
+/**
+ * The shell shared by the seven instruments. It owns semantics, state flags,
+ * the placement affordance, the quality flag and the compact minimal line; the
+ * selected body owns the mechanism and all of its visual language.
+ */
+
+import { R } from '../runtime.js';
+import { BODIES } from './designs/index.js';
+import { MiniLine } from './designs/kit.js';
+import { createVm } from './vm.js';
+
+const h = (...args) => R.h(...args);
+
+const sourceKey = (source) => (
+  source === 'projection' ? 'sourceProjection' : source === 'mixed' ? 'sourceMixed' : 'sourceDom'
+);
+
+const qualityFor = (vm) => {
+  if (vm.stale) return 'stale';
+  if (vm.source === 'dom') return 'dom';
+  if (vm.source === 'mixed') return 'mixed';
+  return null;
+};
+
+const qualityLabel = (quality) => (quality === 'stale' ? '!' : quality === 'mixed' ? 'MIX' : 'DOM');
+
+/**
+ * @param {{
+ *   vm: object,
+ *   t: Function,
+ *   rootRef?: object,
+ *   onToggle?: Function|null,
+ * }} props
+ */
+export const DesignGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
+  const style = vm.style && BODIES[vm.style] ? vm.style : 'bench';
+  const Body = BODIES[style];
+  const sourceText = vm.sourceText || t(sourceKey(vm.source || 'projection'));
+  const quality = qualityFor(vm);
+  const qualityTitle = quality === 'stale'
+    ? t('sourceUnavailable')
+    : quality === 'mixed'
+      ? t('qualityMixed')
+      : t('qualityDom');
+  const interactive = vm.static !== true && typeof onToggle === 'function';
+  const action = vm.placement === 'input' ? t('switchToDock') : t('switchToInput');
+  const showSub = vm.sub !== false;
+  const over = (Number(vm.over) || 0) > 0 || Number(vm.tps) > Number(vm.scale || 0);
+
+  const titleParts = [];
+  if (vm.stale) titleParts.push(t('sourceUnavailable'));
+  titleParts.push(`${t('tipRate', { tps: vm.displayTps })} · ${t('tipCtx', { ctx: vm.ctxDisplay })} · ${t('tipHit', { hit: vm.hitDisplay })}`);
+  const metaParts = [t('scaleTooltip', { n: vm.scale }), t('warnAtTooltip', { n: vm.warnAt })];
+  if (vm.calibrationText) metaParts.push(vm.calibrationText);
+  titleParts.push(metaParts.join(' · '));
+  titleParts.push(`${t('source')} ${sourceText}`);
+  if (interactive) titleParts.push(action);
+
+  const ariaParts = [
+    t(vm.static ? 'ariaGaugeStatic' : 'ariaGaugeClassic', {
+      tps: vm.displayTps,
+      ctx: vm.ctxDisplay,
+      hit: vm.hitDisplay,
+    }),
+  ];
+  if (vm.warn) ariaParts.push(t('warnAria'));
+  if (vm.stale) ariaParts.push(t('sourceUnavailable'));
+  ariaParts.push(`${t('source')} ${sourceText}`);
+  if (vm.calibrationText) ariaParts.push(vm.calibrationText);
+  if (interactive) {
+    const placementLabel = vm.placement === 'input' ? t('placementInput') : t('placementDock');
+    ariaParts.push(t('currentPlacement', { where: placementLabel }));
+    ariaParts.push(action);
+  }
+
+  return h('span', {
+    ref: rootRef,
+    className: 'rg-gauge rgx-gauge',
+    'data-style': style,
+    'data-live': vm.live ? '1' : '0',
+    'data-warn': vm.warn ? '1' : '0',
+    'data-over': over ? '1' : '0',
+    'data-stale': vm.stale ? '1' : '0',
+    'data-quality': quality || undefined,
+    'data-source': vm.source || 'projection',
+    'data-variant': vm.placement,
+    'data-density': vm.density,
+    'data-static': vm.static ? '1' : '0',
+    'data-sub': showSub ? '1' : '0',
+    role: interactive ? 'button' : 'img',
+    tabIndex: interactive ? 0 : undefined,
+    'aria-label': ariaParts.join('；'),
+    title: titleParts.join('\n'),
+    style: vm.static
+      ? { '--rg-p': String(vm.position ?? 0), '--rg-over': String(vm.over ?? 0) }
+      : undefined,
+    onClick: interactive ? onToggle : undefined,
+    onKeyDown: interactive
+      ? (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        onToggle();
+      }
+      : undefined,
+  },
+  h('span', { className: 'rgx-body' }, h(Body, { vm, t })),
+  h(MiniLine, { vm, t }),
+  quality ? h('span', {
+    className: 'rgx-quality',
+    'data-quality': quality,
+    title: qualityTitle,
+    'aria-hidden': 'true',
+  }, qualityLabel(quality)) : null,
+  interactive ? h('span', {
+    className: 'rgx-affordance',
+    'aria-hidden': 'true',
+  }, '⇅') : null);
+};
+
+/**
+ * Static preview for the settings page and the catalogue. Reads the same
+ * geometry and states as the live slot.
+ *
+ * @param {{
+ *   style?: string,
+ *   placement?: 'dock'|'input',
+ *   density?: 'full'|'compact'|'minimal',
+ *   scale?: number,
+ *   warnAt?: number,
+ *   sub?: boolean,
+ *   ctx?: number,
+ *   t: Function,
+ * }} props
+ */
+export const DesignPreview = ({
+  style = 'bench',
+  placement = 'input',
+  density = 'full',
+  scale = 180,
+  warnAt = 80,
+  sub = true,
+  ctx = 65,
+  t,
+}) => h(DesignGauge, {
+  vm: createVm({ style, placement, density, scale, warnAt, sub, ctx }),
+  t,
+});

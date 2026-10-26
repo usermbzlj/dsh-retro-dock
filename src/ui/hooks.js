@@ -109,10 +109,11 @@ export const getMeterReadout = () => ({ ...VIEW.readout });
  *   active: boolean,
  *   rootRef: object,
  *   scale: number,
+ *   style?: string,
  *   onReadout: (value: { tps: number, live: boolean }) => void,
  * }} options
  */
-export const useMeterLoop = ({ active, rootRef, scale, onReadout }) => {
+export const useMeterLoop = ({ active, rootRef, scale, style, onReadout }) => {
   const scaleRef = R.useRef(scale);
   const readoutRef = R.useRef(onReadout);
   scaleRef.current = scale;
@@ -231,5 +232,5 @@ export const useMeterLoop = ({ active, rootRef, scale, onReadout }) => {
       offActivity();
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [active, rootRef]);
+  }, [active, rootRef, style]);
 };

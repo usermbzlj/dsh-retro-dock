@@ -7,6 +7,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { bindReact } from '../src/runtime.js';
 import { createT } from '../src/i18n.js';
 import { ClassicGauge, ClassicPreview, createClassicVm } from '../src/ui/classic.js';
+import { DesignGauge, DesignPreview } from '../src/ui/design-gauge.js';
+import { createVm } from '../src/ui/vm.js';
+import { DESIGN_IDS } from '../src/designs/meta.js';
 
 bindReact(React, null);
 
@@ -117,4 +120,99 @@ test('the settings preview follows scale, placement, density and warning thresho
   assert.match(markup, /data-sub="0"/);
   assert.match(markup, /满量程 300 tok\/s/);
   assert.match(markup, /CTX 警戒 90%/);
+});
+
+
+const designRender = (style, extra = {}, props = {}) => renderToStaticMarkup(React.createElement(DesignGauge, {
+  vm: createVm({ style, ...extra }),
+  t,
+  ...props,
+}));
+
+const DESIGN_MARKERS = {
+  bench: [/rgx-bench-dial/, /rgx-bench-bar/, /rgx-bench-window/],
+  vu: [/rgx-vu-scale/, /rgx-vu-redzone/, /rgx-vu-needle/],
+  altimeter: [/rgx-drum/, /rgx-alt-window/, /rgx-alt-bar/],
+  signal: [/rgx-signal-arm/, /rgx-signal-lamp is-on/, /rgx-signal-counter/],
+  chart: [/rgx-chart-line/, /rgx-chart-pressure/, /rgx-chart-margin/],
+  swiss: [/rgx-swiss-rule/, /rgx-swiss-mini-rule/, /rgx-swiss-rate-cursor/],
+  compass: [/rgx-compass-card/, /rgx-compass-ctx-fill/, /rgx-compass-read/],
+};
+
+test('all seven instrument languages render at 1x with their own mechanism', () => {
+  assert.equal(DESIGN_IDS.length, 7);
+  for (const style of DESIGN_IDS) {
+    const html = designRender(style);
+    assert.match(html, new RegExp('data-style="' + style + '"'));
+    assert.match(html, /class="rg-gauge rgx-gauge"/);
+    assert.match(html, /data-static="1"/);
+    assert.match(html, /role="img"/);
+    for (const marker of DESIGN_MARKERS[style]) assert.match(html, marker, style);
+  }
+});
+
+test('every instrument keeps the same data contract in its own markup', () => {
+  for (const style of DESIGN_IDS) {
+    const html = designRender(style);
+    assert.match(html, /65%/, style);
+    assert.match(html, /99\.9%/, style);
+    assert.match(html, /数据源 宿主统计/, style);
+  }
+});
+
+test('minimal folds every instrument into the shared compact line', () => {
+  for (const style of DESIGN_IDS) {
+    const html = designRender(style, { density: 'minimal' });
+    assert.match(html, /data-density="minimal"/, style);
+    assert.match(html, /rgx-mini/, style);
+    assert.match(html, /CTX 65%/, style);
+    assert.match(html, /HIT 99\.9%/, style);
+  }
+});
+
+test('warning, over-range, DOM and stale stay visible on the new shell', () => {
+  const warn = designRender('signal', { ctx: 85 });
+  assert.match(warn, /data-warn="1"/);
+  assert.match(warn, /rgx-signal-alert/);
+
+  const over = designRender('bench', { tps: 252 });
+  assert.match(over, /data-over="1"/);
+  assert.match(over, /rgx-bench-over-flag/);
+
+  const dom = designRender('chart', { source: 'dom' });
+  assert.match(dom, /class="rgx-quality"/);
+  assert.match(dom, />DOM</);
+
+  const stale = designRender('compass', { stale: true });
+  assert.match(stale, /data-stale="1"/);
+  assert.match(stale, /class="rgx-quality"/);
+});
+
+test('the new shell is interactive when it is not a preview', () => {
+  const html = designRender('vu', { placement: 'input' }, {
+    onToggle: () => {},
+    vm: { ...createVm({ style: 'vu', placement: 'input' }), static: false },
+  });
+  assert.match(html, /role="button"/);
+  assert.match(html, /tabindex="0"/);
+  assert.match(html, /当前在输入框上方/);
+});
+
+test('the design preview follows scale, threshold, density and sub visibility', () => {
+  const html = renderToStaticMarkup(React.createElement(DesignPreview, {
+    style: 'swiss',
+    placement: 'dock',
+    density: 'minimal',
+    scale: 300,
+    warnAt: 90,
+    sub: false,
+    ctx: 75,
+    t,
+  }));
+  assert.match(html, /data-style="swiss"/);
+  assert.match(html, /data-variant="dock"/);
+  assert.match(html, /data-density="minimal"/);
+  assert.match(html, /data-sub="0"/);
+  assert.match(html, /满量程 300 tok\/s/);
+  assert.match(html, /CTX 警戒 90%/);
 });

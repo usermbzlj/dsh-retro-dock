@@ -21,6 +21,8 @@ const params = new URLSearchParams(window.location.search);
 const theme = params.get('theme') === 'light' ? 'light' : 'dark';
 const lang = params.get('lang') === 'en' ? 'en' : 'zh';
 const view = params.get('view') === 'settings' ? 'settings' : 'gallery';
+const styleParam = params.get('style');
+if (styleParam) prefs.set({ style: styleParam });
 
 document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
 if (theme === 'dark') document.body.setAttribute('data-ds-dark-theme', '');

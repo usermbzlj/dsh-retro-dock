@@ -6,7 +6,7 @@ import { JSDOM } from 'jsdom';
  * Integration test: a real React root, a real jsdom document, and the plugin's
  * apply() with a mocked slot host.
  */
-test('the classic gauge mounts, streams and toggles placement', async () => {
+test('the dock mounts, streams, switches styles and toggles placement', async () => {
   const dom = new JSDOM('<!doctype html><html><head></head><body><div id="host"></div></body></html>', {
     url: 'http://localhost/',
     pretendToBeVisual: true,
@@ -186,6 +186,38 @@ test('the classic gauge mounts, streams and toggles placement', async () => {
     prefs.set({ placement: 'dock' });
   });
   assert.ok(container.querySelector('.rg-gauge'));
+
+  await act(async () => {
+    prefs.set({ lang: 'zh' });
+  });
+
+  const Settings = registered.get('settings.section');
+  const settingsHost = window.document.createElement('div');
+  window.document.body.append(settingsHost);
+  const settingsRoot = ReactDOMClient.createRoot(settingsHost);
+  await act(async () => {
+    settingsRoot.render(React.createElement(Settings));
+  });
+  const styleOptions = settingsHost.querySelectorAll('.rg-style-option');
+  assert.equal(styleOptions.length, 8, 'classic plus seven instrument languages');
+  assert.equal(styleOptions[0].getAttribute('aria-label'), '经典 Classic');
+
+  await act(async () => {
+    styleOptions[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
+  });
+  assert.equal(prefs.getSnapshot().style, 'bench');
+  assert.equal(styleOptions[1].getAttribute('aria-pressed'), 'true');
+  const benchGauge = container.querySelector('.rg-gauge[data-style="bench"]');
+  assert.ok(benchGauge.querySelector('.rgx-bench-dial'));
+  assert.ok(benchGauge.style.getPropertyValue('--rg-p'), 'switching styles must re-arm the meter loop on the new root');
+  assert.ok(settingsHost.querySelector('.rg-preview-stage .rg-gauge[data-style="bench"]'));
+
+  assert.equal(settingsHost.querySelectorAll('.rg-style-option')[1].getAttribute('aria-pressed'), 'true');
+
+  await act(async () => {
+    settingsRoot.unmount();
+  });
+  settingsHost.remove();
 
   await act(async () => {
     root.unmount();

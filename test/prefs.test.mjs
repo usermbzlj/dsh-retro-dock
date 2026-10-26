@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createPrefs, PREFS_KEY, LEGACY_PLACEMENT_KEY } from '../src/prefs.js';
-import { DEFAULT_PREFS } from '../src/themes.js';
+import { createPrefs, PREFS_KEY, PREVIOUS_KEY, LEGACY_PLACEMENT_KEY } from '../src/prefs.js';
+import { DEFAULT_PREFS, STYLES } from '../src/themes.js';
 
 class MemoryStorage {
   constructor() {
@@ -51,18 +51,32 @@ test('preferences persist and validate across instances', () => {
   assert.equal(restored.lang, 'en');
 });
 
-test('the retired 1.1.0 style value is dropped', () => {
+test('the retired 1.1.0 style value falls back to classic', () => {
   const storage = new MemoryStorage();
-  storage.setItem(PREFS_KEY, JSON.stringify({ placement: 'input', style: 'neon' }));
+  storage.setItem(PREVIOUS_KEY, JSON.stringify({
+    placement: 'dock',
+    style: 'neon',
+    density: 'auto',
+  }));
   const snapshot = createPrefs({ storage }).getSnapshot();
-  assert.equal(snapshot.placement, 'input');
-  assert.equal('style' in snapshot, false);
+  assert.equal(snapshot.style, 'classic');
+  assert.equal(snapshot.density, DEFAULT_PREFS.density);
+  assert.equal(storage.getItem(PREVIOUS_KEY), null);
+  assert.ok(storage.getItem(PREFS_KEY));
+});
+
+test('the selected instrument language persists', () => {
+  const storage = new MemoryStorage();
+  createPrefs({ storage }).set({ style: 'signal' });
+  assert.ok(STYLES.includes('signal'));
+  assert.equal(createPrefs({ storage }).getSnapshot().style, 'signal');
 });
 
 test('unknown or out-of-range values fall back safely', () => {
   const storage = new MemoryStorage();
   storage.setItem(PREFS_KEY, JSON.stringify({
     placement: 'sidebar',
+    style: 'neon',
     density: 'tiny',
     scale: 999,
     warnAt: 12,
@@ -70,6 +84,7 @@ test('unknown or out-of-range values fall back safely', () => {
     lang: 'fr',
   }));
   const snapshot = createPrefs({ storage }).getSnapshot();
+  assert.equal(snapshot.style, DEFAULT_PREFS.style);
   assert.equal(snapshot.placement, DEFAULT_PREFS.placement);
   assert.equal(snapshot.density, DEFAULT_PREFS.density);
   assert.equal(snapshot.scale, DEFAULT_PREFS.scale);

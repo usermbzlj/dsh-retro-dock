@@ -7,7 +7,8 @@
 
 import { DEFAULT_PREFS, normalizePrefs } from './themes.js';
 
-export const PREFS_KEY = 'dsh-retro-dock:prefs:v2';
+export const PREFS_KEY = 'dsh-retro-dock:prefs:v3';
+export const PREVIOUS_KEY = 'dsh-retro-dock:prefs:v2';
 export const LEGACY_PLACEMENT_KEY = 'rg-gauge-placement';
 
 const getDefaultStorage = () => {
@@ -19,7 +20,8 @@ const getDefaultStorage = () => {
 };
 
 const samePrefs = (left, right) => (
-  left.placement === right.placement
+  left.style === right.style
+  && left.placement === right.placement
   && left.density === right.density
   && left.scale === right.scale
   && left.warnAt === right.warnAt
@@ -37,6 +39,7 @@ const samePrefs = (left, right) => (
 export const createPrefs = (options = {}) => {
   const storage = options.storage === undefined ? getDefaultStorage() : options.storage;
   const key = options.key ?? PREFS_KEY;
+  const previousKey = options.previousKey ?? PREVIOUS_KEY;
   const legacyKey = options.legacyKey ?? LEGACY_PLACEMENT_KEY;
 
   const read = () => {
@@ -48,6 +51,17 @@ export const createPrefs = (options = {}) => {
       }
     } catch {
       // Corrupt or unavailable storage falls through to a migration attempt.
+    }
+    try {
+      const previous = storage?.getItem(previousKey);
+      if (previous) {
+        const migrated = normalizePrefs(JSON.parse(previous));
+        storage?.setItem(key, JSON.stringify(migrated));
+        storage?.removeItem(previousKey);
+        return migrated;
+      }
+    } catch {
+      // Migration is best-effort; defaults still work.
     }
     try {
       const legacy = storage?.getItem(legacyKey);

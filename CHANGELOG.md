@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.4.0 — 2026-10-26
+
+### Added
+
+- **Seven measuring languages** beside the classic dial: 台表 Bench, 广播 VU, 高度表 Altimeter, 信号楼 Signal, 记录纸 Chart, 瑞士尺 Swiss and 罗经 Compass. Each has its own mechanism, surface, type and motion; all share one `vm`, calibration and the live / warn / over / stale / DOM state flags.
+- **Style picker in the host settings page**: eight options (classic + seven), each with a real 42px preview; the selected option uses `aria-pressed`, the stage is hidden from assistive tech, and the option button has its own label.
+- **Shared instrument shell** (`src/ui/design-gauge.js`): semantics, title/aria, quality flags, placement affordance and the minimal-density line. The classic dial keeps its own implementation and stays the eighth option.
+- **Design study and catalogue**: `docs/seven-designs.md`, `docs/catalogue.html` (`npm run catalogue`), 91 real 1× instances, light/dark racks, six states, 2× craft details and a minimal comparison.
+- **`prefs:v3`** with v2 migration and deletion; retired 1.1.0 style values (`neon` / `minimal` / `terminal`) normalise to `classic` instead of leaking into the new registry.
+
+### Changed
+
+- The default remains **classic**; the new languages are opt-in, so an update does not silently change the instrument in the composer.
+- The settings page now leads with the style picker and keeps the existing full-page scale; the preview follows the selected style, placement, density, scale, warning line and sub-switch — beside the form on wide hosts, below it in the host's 800px modal.
+- The meter loop is re-armed when the style changes, so the new root receives `--rg-p` immediately instead of waiting for a remount.
+- Only the Chart style records history: 20s at 4Hz, paused while the document is hidden; the static previews use a deterministic trace.
+- Contrast corrections: the light Signal amber lamp is now `#965812` (4.3:1 on the enamel plate); the light Altimeter limit red is now `#A63122` (5.0:1 on the panel); the altimeter's over marks on the black window use a separate bright red (`#E0705C` / `#F07A62`).
+
+### Fixed
+
+- **Settings page at the host's real width.** The page now answers to its own container (≈560px inside DSH's 800px settings modal) instead of the desktop viewport. The form and the eight-design grid use the full width, the style names stay on one line, field labels no longer wrap one character per line, and the previews move below the form as a two-up strip. The two-column form + sticky preview stays for hosts wide enough to fit it (≥900px). Before, the form was squeezed to 176px and six of the eight style names were ellipsized.
+
+### Verification
+
+- 56/56 tests pass (seven-mechanism SSR, settings preview, jsdom style switch and meter-loop re-arm, bundle contract).
+- Catalogue and settings style picker rendered in Chromium at 1440px; light/dark screenshots generated.
+- Settings page re-measured inside an 800×800 host modal (559px pane after the 5px scrollbar), a 700px pane and a 1200px pane: 275px / 459px / 226px style cards, no clipped names, all eight previews fit their stages.
+- A real-session trace and the live feel of each new mechanism are still pending.
+
 ## 1.3.0 — 2026-10-26
 
 ### Fixed

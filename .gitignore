@@ -4,3 +4,6 @@ node_modules/
 .DS_Store
 docs/gallery.html
 docs/gallery.js
+docs/catalogue.html
+docs/catalogue.js
+review/

@@ -3,14 +3,18 @@
  * validation, settings, the gallery and tests can all import it.
  */
 
+import { DESIGN_IDS } from './designs/meta.js';
+
 export const DENSITIES = Object.freeze(['auto', 'full', 'compact', 'minimal']);
 export const PLACEMENTS = Object.freeze(['dock', 'input']);
 export const LANGUAGES = Object.freeze(['auto', 'zh', 'en']);
 export const SCALES = Object.freeze([120, 180, 240, 300]);
 export const WARN_LEVELS = Object.freeze([70, 80, 90]);
+export const STYLES = Object.freeze(['classic', ...DESIGN_IDS]);
 
 export const DEFAULT_PREFS = Object.freeze({
-  version: 2,
+  version: 3,
+  style: 'classic',
   placement: 'dock',
   density: 'auto',
   scale: 180,
@@ -18,6 +22,12 @@ export const DEFAULT_PREFS = Object.freeze({
   sub: true,
   lang: 'auto',
 });
+
+/**
+ * @param {unknown} value
+ * @returns {string} one of STYLES.
+ */
+export const normalizeStyle = (value) => (STYLES.includes(value) ? value : DEFAULT_PREFS.style);
 
 /**
  * @param {unknown} value
@@ -38,8 +48,9 @@ export const normalizeWarnAt = (value) => {
 };
 
 /**
- * Coerce an arbitrary object into a safe preference snapshot. The 1.1.0
- * `style` value is no longer a preference and is dropped here.
+ * Coerce an arbitrary object into a safe preference snapshot. The 1.1.0 style
+ * values (neon / minimal / terminal) are no longer valid ids, so they fall back
+ * to classic instead of leaking into the new instrument registry.
  *
  * @param {Record<string, unknown>|null|undefined} raw
  * @returns {typeof DEFAULT_PREFS}
@@ -47,7 +58,8 @@ export const normalizeWarnAt = (value) => {
 export const normalizePrefs = (raw) => {
   const value = raw !== null && typeof raw === 'object' ? raw : {};
   return {
-    version: 2,
+    version: 3,
+    style: normalizeStyle(value.style),
     placement: PLACEMENTS.includes(value.placement) ? value.placement : DEFAULT_PREFS.placement,
     density: DENSITIES.includes(value.density) ? value.density : DEFAULT_PREFS.density,
     scale: normalizeScale(value.scale),
