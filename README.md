@@ -74,7 +74,7 @@ pnpm add github:usermbzlj/dsh-retro-dock
 npm pack   # local-retro-dock-1.5.0.tgz
 ```
 
-> 1.1.0 的四套样式版本仍保留在 tag / Release 里；当前 `main` 是 1.4.0：经典 + 七种测量语言。
+> 1.1.0 的四套样式版本仍保留在 tag / Release 里；当前 `main` 是 1.5.0：经典 + 七种测量语言。
 
 ## 交互
 
@@ -108,7 +108,7 @@ npm pack   # local-retro-dock-1.5.0.tgz
 ```bash
 npm install
 npm run build      # 把 src/ 打包成 client.js
-npm test           # 63 项测试
+npm test           # 67 项测试
 npm run preview    # 生成 docs/gallery.html（经典样张与设置页）
 npm run catalogue  # 生成 docs/catalogue.html（七种测量语言目录）
 npm run shots      # 需要 Chromium：npx playwright install chromium
@@ -141,7 +141,7 @@ scripts/              build / gallery / catalogue / shots
 
 ## 验证状态
 
-- 自动化：63/63 通过；经典仪表、七套新机构、设置页样式选择器都在 Chromium 中渲染并截图。
+- 自动化：67/67 通过；经典仪表、七套新机构、设置页样式选择器都在 Chromium 中渲染并截图。
 - 目录页：`docs/catalogue.html` 在 Chromium 中按 1440px 渲染，共 91 个真实 1× 仪表实例；浅/深双语料、六种状态、2× 工艺细节与 minimal 密度对照都在页面里。
 - 对比度：深层墨/浅层墨文字均 ≥4.5:1；承担读数的弧、针、灯与红区 ≥3:1；浅色信号楼的琥珀灯已加深到 4.3:1，浅色高度表的界限红改为 5.0:1。
 - 宿主实机：尚未采集真实会话 trace。刷新/重启后 tooltip 应显示 `数据源 宿主统计`；如果显示 `页面文本` 或长期“等待宿主统计”，请反馈 tooltip 文案和宿主版本。

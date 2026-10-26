@@ -4,13 +4,13 @@
 
 ### Added
 
-- **Last-turn readout** in the tooltip and on the settings page: first-token latency (from the host running flag; omitted when the host has none), average speed over active decode time — gaps over 1.5 s such as tool waits are excluded — and output tokens, all with the current calibration factor. Without a running flag a 3 s pause starts a new turn.
-- **Measurement-log export** in settings: a bounded JSON log (20 000 entries) of token deltas, host `sessionStats`, running flips and accepted calibration samples, for offline calibration review. It holds no conversation text and never leaves the page unless exported.
+- **Last-turn readout** in the tooltip and on the settings page: first-token latency (from the host's own `running` flag, not from running tool calls; omitted when the host has none), average speed over active decode time — gaps over 1.5 s such as tool waits are excluded and a block landing at once is capped — and output tokens, all with the current calibration factor. A running flap shorter than 3 s continues the turn; without a flag a 3 s pause starts a new one. The previous turn stays visible until the next one produces output. The settings row refreshes twice a second while tokens arrive.
+- **Measurement-log export** in settings: a bounded JSON log (20 000 entries) of token deltas, host `sessionStats`, running flips and accepted calibration samples, for offline calibration review. It holds no conversation text and never leaves the page unless exported; it is trimmed in batches, not copied on every token.
 - macOS / Linux fallbacks in the seven styles' font stacks (DIN Alternate, Roboto Condensed, SF Mono, Menlo, DejaVu); Windows rendering is unchanged.
 
 ### Fixed
 
-- **Calibration survives conversation switches.** Switching to a conversation with larger host totals used to count the whole difference as one calibration sample: a single switch moved the factor from ×1.00 to ×1.38, and repeated switches pushed it toward the 2.5 limit. A `decodeMs` jump beyond the elapsed wall time now rebases the baseline without sampling, and a raw ratio outside 0.25–4 is rejected instead of clamped.
+- **Calibration survives conversation switches**, including after the user has been idle (host tokens that grew while the meter saw almost nothing no longer count). Switching to a conversation with larger host totals used to count the whole difference as one calibration sample: a single switch moved the factor from ×1.00 to ×1.38, and repeated switches pushed it toward the 2.5 limit. A `decodeMs` jump beyond the elapsed wall time now rebases the baseline without sampling, and a raw ratio outside 0.25–4 is rejected instead of clamped.
 - **Signal no longer shows green for an unknown CTX.** Without a context reading the lamps stay dark; before, the green lamp claimed the context was safe. The view model now carries `ctxKnown` / `hitKnown`.
 - **Chart stops re-rendering when idle.** Once the 20 s paper is flat, idle ticks no longer re-render the instrument.
 

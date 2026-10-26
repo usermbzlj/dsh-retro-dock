@@ -3669,6 +3669,10 @@
           lastTickAt
         };
       },
+      /** @returns {number} the current calibration factor, without a snapshot copy. */
+      calibration() {
+        return calibration;
+      },
       /**
        * @returns {number} session-wide estimated tokens, used for calibration.
        */
@@ -3772,6 +3776,7 @@
   var MAX_PLAUSIBLE_RATIO = 4;
   var TURN_GAP_MS = 3e3;
   var TURN_ACTIVE_GAP_MS = 1500;
+  var TURN_MAX_TPS = 600;
   var LOG_LIMIT = 2e4;
   var createEngine = (options = {}) => {
     const rate = createRateMeter(options.rate);
@@ -3792,11 +3797,17 @@
     let lastStatsKey = "";
     let previousDecodeMs = 0;
     let previousStatsAt = 0;
+    let previousDecodeTokens = 0;
+    let previousEstimated = 0;
+    let turnActive = null;
+    let turnEndedAt = null;
     let turn = null;
+    let previousTurn = null;
+    let skipNextTurnDelta = false;
     let log = [];
     const record = (entry) => {
       log.push(entry);
-      if (log.length > LOG_LIMIT) log = log.slice(log.length - LOG_LIMIT);
+      if (log.length > LOG_LIMIT * 1.25) log = log.slice(log.length - LOG_LIMIT);
     };
     const rebaseCalibration = (decodeTokens) => {
       lastRealDecode = decodeTokens;
@@ -3807,22 +3818,23 @@
       for (const listener of listeners) listener(version);
     };
     const startTurn = (startAt) => {
+      if (turn !== null && turn.firstAt !== null) previousTurn = turn;
       turn = { startAt, firstAt: null, lastAt: null, tokens: 0, activeTokens: 0, activeMs: 0 };
     };
     const noteTurn = (delta, at2) => {
       const gap = turn && turn.lastAt !== null ? at2 - turn.lastAt : 0;
-      if (turn === null || running !== true && turn.lastAt !== null && gap > TURN_GAP_MS) startTurn(null);
+      if (turn === null || turnActive !== true && turn.lastAt !== null && gap > TURN_GAP_MS) startTurn(null);
       if (turn.firstAt === null) {
         turn.firstAt = at2;
       } else if (gap > 0 && gap <= TURN_ACTIVE_GAP_MS) {
         turn.activeMs += gap;
-        turn.activeTokens += delta;
+        turn.activeTokens += Math.min(delta, gap / 1e3 * TURN_MAX_TPS);
       }
       turn.tokens += delta;
       turn.lastAt = at2;
     };
-    const markActivity = (delta, at2) => {
-      noteTurn(delta, at2);
+    const markActivity = (delta, at2, countTurn = true) => {
+      if (countTurn) noteTurn(delta, at2);
       record({ t: Math.round(at2), k: "tok", d: Math.round(delta * 100) / 100 });
       lastNoteAt = Math.max(lastNoteAt, at2);
       for (const listener of activityListeners) listener();
@@ -3839,7 +3851,8 @@
         const result = counter.update(blocks);
         if (result.delta > 0) {
           rate.note(result.delta, at2);
-          markActivity(result.delta, at2);
+          markActivity(result.delta, at2, !skipNextTurnDelta);
+          skipNextTurnDelta = false;
         }
         return result;
       },
@@ -3864,6 +3877,7 @@
         if (nextOk && !streamOk) {
           counter.reset();
           rate.resetGeneration();
+          skipNextTurnDelta = true;
           lastEstimated = rate.estimatedTotal();
           if (sessionDecode !== null) lastRealDecode = sessionDecode;
         }
@@ -3876,27 +3890,49 @@
        * @param {boolean|null} value host "running" flag.
        * @param {number} [at] monotonic timestamp; starts the turn clock.
        */
-      setRunning(value, at2) {
+      setRunning(value) {
         const next = typeof value === "boolean" ? value : null;
         if (next === running) return;
-        if (next === true && Number.isFinite(at2)) startTurn(at2);
         running = next;
-        if (Number.isFinite(at2)) record({ t: Math.round(at2), k: "run", v: next });
         emit();
       },
       /**
-       * The most recent turn, in progress or finished. Tokens and speed carry the
-       * current calibration factor; `ttftMs` is null without a host running flag.
+       * The host's own turn flag (`state.running`), not one derived from tool
+       * calls. A rising edge starts the first-token clock; a flap shorter than
+       * the turn gap (between tool calls) continues the current turn.
+       *
+       * @param {boolean|null} value
+       * @param {number} at monotonic timestamp.
+       */
+      setTurnActive(value, at2) {
+        const next = typeof value === "boolean" ? value : null;
+        if (next === turnActive) return;
+        const known = Number.isFinite(at2);
+        if (next === true) {
+          const flap = turnEndedAt !== null && known && at2 - turnEndedAt < TURN_GAP_MS && turn !== null;
+          if (!flap) startTurn(known ? at2 : null);
+        } else if (turnActive === true) {
+          turnEndedAt = known ? at2 : null;
+          emit();
+        }
+        turnActive = next;
+        if (known) record({ t: Math.round(at2), k: "run", v: next });
+      },
+      /**
+       * The most recent turn with output: the current one once it has produced
+       * a token, otherwise the previous one. Tokens and speed carry the current
+       * calibration factor; `ttftMs` is null without a host turn flag.
        *
        * @returns {{ ttftMs: number|null, tokens: number, avgTps: number|null }|null}
        */
       getLastTurn() {
-        if (turn === null || turn.firstAt === null) return null;
-        const factor = rate.snapshot().calibration;
+        const shown = turn !== null && turn.firstAt !== null ? turn : previousTurn;
+        if (shown === null) return null;
+        const factor = rate.calibration();
         return {
-          ttftMs: turn.startAt === null ? null : Math.max(0, turn.firstAt - turn.startAt),
-          tokens: turn.tokens * factor,
-          avgTps: turn.activeMs >= 500 ? turn.activeTokens * factor / (turn.activeMs / 1e3) : null
+          ttftMs: shown.startAt === null ? null : Math.max(0, shown.firstAt - shown.startAt),
+          tokens: shown.tokens * factor,
+          avgTps: shown.activeMs >= 500 ? shown.activeTokens * factor / (shown.activeMs / 1e3) : null
         };
       },
       /**
@@ -3949,8 +3985,12 @@
         calibrationAvailable = true;
         const decodeMsDelta = decodeMs - previousDecodeMs;
         const elapsed = at2 - previousStatsAt;
+        const intervalReal = decodeTokens - previousDecodeTokens;
+        const intervalEstimated = rate.estimatedTotal() - previousEstimated;
         previousDecodeMs = decodeMs;
         previousStatsAt = at2;
+        previousDecodeTokens = decodeTokens;
+        previousEstimated = rate.estimatedTotal();
         if (sessionDecode === null) {
           sessionDecode = decodeTokens;
           rebaseCalibration(decodeTokens);
@@ -3965,7 +4005,9 @@
           return;
         }
         sessionDecode = decodeTokens;
-        if (decodeMsDelta < 0 || decodeMsDelta > elapsed * STATS_CLOCK_SLACK + STATS_CLOCK_SLACK_MS) {
+        const clockJump = !Number.isFinite(elapsed) || decodeMsDelta < 0 || decodeMsDelta > elapsed * STATS_CLOCK_SLACK + STATS_CLOCK_SLACK_MS;
+        const unseenTokens = intervalReal >= 20 && intervalEstimated * MAX_PLAUSIBLE_RATIO < intervalReal;
+        if (clockJump || unseenTokens) {
           rebaseCalibration(decodeTokens);
           return;
         }
@@ -4014,7 +4056,11 @@
         lastStatsKey = "";
         previousDecodeMs = 0;
         previousStatsAt = 0;
+        previousDecodeTokens = 0;
+        previousEstimated = 0;
         turn = null;
+        previousTurn = null;
+        turnEndedAt = null;
         emit();
       },
       /**
@@ -4426,7 +4472,7 @@
     currentPlacement: "Currently {where}",
     ariaGaugeStatic: "Live speed {tps} tok/s, context {ctx}, cache hit {hit}",
     ariaGaugeClassic: "Live speed {tps} tok/s, context {ctx}, cache hit {hit}",
-    turnLabel: "Last turn:",
+    turnLabel: "Last turn: ",
     turnTtft: "first token {v}",
     turnAvg: "avg ≈ {v} tok/s",
     turnTokens: "≈ {v} tok",
@@ -5965,7 +6011,7 @@
     if (turn.ttftMs !== null) parts.push(t("turnTtft", { v: formatMs(turn.ttftMs) }));
     if (turn.avgTps !== null) parts.push(t("turnAvg", { v: Math.round(turn.avgTps) }));
     parts.push(t("turnTokens", { v: formatTokens(turn.tokens) }));
-    return `${t("turnLabel")} ${parts.join(" · ")}`;
+    return parts.join(" · ");
   };
 
   // src/ui/gauge.js
@@ -5976,6 +6022,7 @@
     const calls = state.legacy && state.legacy.runningCalls;
     return Array.isArray(calls) ? calls.length > 0 : null;
   };
+  var selectTurnActive = (state) => state !== null && state !== void 0 && typeof state.running === "boolean" ? state.running : null;
   var selectPartial = (state) => state && state.legacy ? state.legacy.partial : void 0;
   var createGauge = (variant) => function GaugeSlot(props) {
     const snapshot = usePrefs();
@@ -5993,14 +6040,19 @@
     const pressure = projection ? projection("contextPressure") : null;
     const usage = projection ? projection("tokenUsage") : null;
     const running = chat ? chat(selectRunning) : null;
+    const turnActive = chat ? chat(selectTurnActive) : null;
     const partial = chat ? chat(selectPartial) : null;
     const projectedCtx = contextPercent(pressure);
     const projectedHit = cacheHitPercent(usage);
     useMeterLoop({ active, rootRef, scale: snapshot.scale, style: snapshot.style, onReadout: setReadout });
     R.useEffect(() => {
       if (!active) return;
-      engine.setRunning(running, now());
+      engine.setRunning(running);
     }, [active, running]);
+    R.useEffect(() => {
+      if (!active) return;
+      engine.setTurnActive(turnActive, now());
+    }, [active, turnActive]);
     R.useEffect(() => {
       if (!active) return;
       if (!chat) {
@@ -6053,6 +6105,7 @@
     const sourceText = t(source === "projection" ? "sourceProjection" : source === "mixed" ? "sourceMixed" : "sourceDom");
     const calibration = engine.getCalibration();
     const calibrationText = calibration.status === "pending" ? t("calibrationPending") : calibration.status === "unavailable" ? t("calibrationUnavailable") : calibration.samples > 0 ? `${t("calibration")} ×${calibration.factor.toFixed(2)} · ${t("samples", { n: calibration.samples })}` : t("notCalibrated");
+    const turnText = formatTurn(engine.getLastTurn(), t);
     const vm = {
       style: snapshot.style,
       density,
@@ -6076,7 +6129,7 @@
       source,
       sourceText,
       calibrationText,
-      turnText: formatTurn(engine.getLastTurn(), t),
+      turnText: turnText ? `${t("turnLabel")}${turnText}` : "",
       scale: snapshot.scale,
       revision
     };
@@ -6091,8 +6144,25 @@
 
   // src/ui/settings.js
   var h5 = (...args) => R.h(...args);
+  var useActivityTick = () => {
+    const [, setTick] = R.useState(0);
+    R.useEffect(() => {
+      let timer = 0;
+      const off = engine.onActivity(() => {
+        if (timer) return;
+        timer = setTimeout(() => {
+          timer = 0;
+          setTick((value) => value + 1);
+        }, 500);
+      });
+      return () => {
+        off();
+        if (timer) clearTimeout(timer);
+      };
+    }, []);
+  };
   var downloadLog = () => {
-    if (typeof document === "undefined" || typeof Blob !== "function" || typeof URL === "undefined") return;
+    if (typeof document === "undefined" || !document.body || typeof Blob !== "function" || typeof URL === "undefined" || typeof URL.createObjectURL !== "function") return;
     const payload = { ...engine.exportLog(), version: VERSION, exportedAt: (/* @__PURE__ */ new Date()).toISOString() };
     const url = URL.createObjectURL(new Blob([JSON.stringify(payload)], { type: "application/json" }));
     const link = document.createElement("a");
@@ -6189,6 +6259,7 @@
   var SettingsControls = ({ t, lang }) => {
     const snapshot = usePrefs();
     useEngineVersion();
+    useActivityTick();
     const calibration = engine.getCalibration();
     const calibrationText = calibration.status === "pending" ? t("calibrationPending") : calibration.status === "unavailable" ? t("calibrationUnavailable") : calibration.samples > 0 ? `${t("calibration")} ×${calibration.factor.toFixed(2)} · ${t("samples", { n: calibration.samples })}` : t("notCalibrated");
     const set = (patch) => prefs.set(patch);
@@ -6290,7 +6361,7 @@
           h5(
             "span",
             { className: "rg-calib-text rg-turn-text" },
-            formatTurn(engine.getLastTurn(), t).replace(t("turnLabel"), "").trim() || t("turnEmpty")
+            formatTurn(engine.getLastTurn(), t) || t("turnEmpty")
           )
         )
       ),

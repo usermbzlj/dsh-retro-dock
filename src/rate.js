@@ -157,6 +157,11 @@ export const createRateMeter = (options = {}) => {
       };
     },
 
+    /** @returns {number} the current calibration factor, without a snapshot copy. */
+    calibration() {
+      return calibration;
+    },
+
     /**
      * @returns {number} session-wide estimated tokens, used for calibration.
      */

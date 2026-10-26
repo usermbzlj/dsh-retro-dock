@@ -81,7 +81,7 @@ test('the last turn reports first-token latency and active average speed', () =>
   const engine = createEngine();
   engine.setStream({ ok: true });
   assert.equal(engine.getLastTurn(), null);
-  engine.setRunning(true, 1000);
+  engine.setTurnActive(true, 1000);
   engine.noteTokens(10, 1800);
   for (let index = 1; index <= 10; index += 1) engine.noteTokens(10, 1800 + index * 100);
   const turn = engine.getLastTurn();
@@ -103,7 +103,7 @@ test('without a running flag a long pause starts a new turn and latency is unkno
 
 test('tool waits inside a turn do not dilute the average', () => {
   const engine = createEngine();
-  engine.setRunning(true, 0);
+  engine.setTurnActive(true, 0);
   for (const at of [100, 200, 300, 400, 8400, 8500, 8600, 8700]) engine.noteTokens(10, at);
   assert.equal(Math.round(engine.getLastTurn().avgTps), 100);
 });
@@ -111,7 +111,7 @@ test('tool waits inside a turn do not dilute the average', () => {
 test('the measurement log records tokens, stats, running flips and samples', () => {
   const engine = createEngine();
   engine.setStream({ ok: true });
-  engine.setRunning(true, 900);
+  engine.setTurnActive(true, 900);
   engine.setStats({ decodeTokens: 1000, decodeMs: 5000 }, 1000);
   engine.notePartial(blocks('中'.repeat(40)), 1100);
   engine.setStats({ decodeTokens: 1030, decodeMs: 5200 }, 1100);
@@ -121,6 +121,50 @@ test('the measurement log records tokens, stats, running flips and samples', () 
   assert.deepEqual(kinds, ['run', 'stats', 'tok', 'stats', 'cal']);
   assert.equal(exported.calibration.samples, 1);
   assert.equal(JSON.stringify(exported).includes('中'), false, 'no conversation text');
+});
+
+test('an idle user switching to a longer conversation does not calibrate', () => {
+  const engine = createEngine();
+  engine.setStream({ ok: true });
+  engine.setStats({ decodeTokens: 1000, decodeMs: 5000 }, 1000);
+  // Five idle minutes, then a switch: the clock allows it, the meter saw nothing.
+  engine.setStats({ decodeTokens: 1300, decodeMs: 65000 }, 301000);
+  engine.notePartial(blocks('中'.repeat(40)), 302000);
+  engine.setStats({ decodeTokens: 1330, decodeMs: 65400 }, 302100);
+  const calibration = engine.getCalibration();
+  assert.equal(calibration.samples, 1);
+  assert.ok(Math.abs(calibration.factor - 1.0625) < 1e-9);
+});
+
+test('a running flap between tool calls continues the turn', () => {
+  const engine = createEngine();
+  engine.setTurnActive(true, 0);
+  for (const at of [400, 500, 600, 700, 800, 900]) engine.noteTokens(10, at);
+  engine.setTurnActive(false, 1000);
+  engine.setTurnActive(true, 2500);
+  engine.noteTokens(10, 3900);
+  const turn = engine.getLastTurn();
+  assert.equal(turn.ttftMs, 400);
+  assert.equal(turn.tokens, 70);
+});
+
+test('a new turn keeps showing the previous one until it has output', () => {
+  const engine = createEngine();
+  engine.setTurnActive(true, 0);
+  for (const at of [300, 400, 500, 600, 700, 800, 900]) engine.noteTokens(10, at);
+  engine.setTurnActive(false, 1000);
+  engine.setTurnActive(true, 10000);
+  assert.equal(engine.getLastTurn().tokens, 70);
+  engine.noteTokens(5, 10200);
+  assert.equal(engine.getLastTurn().ttftMs, 200);
+});
+
+test('a block landing at once cannot claim an impossible average', () => {
+  const engine = createEngine();
+  engine.setTurnActive(true, 0);
+  for (const at of [100, 200, 300, 400, 500]) engine.noteTokens(1, at);
+  engine.noteTokens(2000, 600);
+  assert.ok(engine.getLastTurn().avgTps <= 600);
 });
 
 test('a missing sessionStats projection is reported as unavailable', () => {

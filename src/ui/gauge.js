@@ -38,6 +38,11 @@ const selectRunning = (state) => {
   return Array.isArray(calls) ? calls.length > 0 : null;
 };
 
+/** Only the host's own turn flag; `runningCalls` means a tool is running. */
+const selectTurnActive = (state) => (
+  state !== null && state !== undefined && typeof state.running === 'boolean' ? state.running : null
+);
+
 const selectPartial = (state) => (state && state.legacy ? state.legacy.partial : undefined);
 
 /**
@@ -63,6 +68,7 @@ export const createGauge = (variant) => function GaugeSlot(props) {
   const pressure = projection ? projection('contextPressure') : null;
   const usage = projection ? projection('tokenUsage') : null;
   const running = chat ? chat(selectRunning) : null;
+  const turnActive = chat ? chat(selectTurnActive) : null;
   const partial = chat ? chat(selectPartial) : null;
 
   const projectedCtx = contextPercent(pressure);
@@ -72,8 +78,13 @@ export const createGauge = (variant) => function GaugeSlot(props) {
 
   R.useEffect(() => {
     if (!active) return;
-    engine.setRunning(running, now());
+    engine.setRunning(running);
   }, [active, running]);
+
+  R.useEffect(() => {
+    if (!active) return;
+    engine.setTurnActive(turnActive, now());
+  }, [active, turnActive]);
 
   R.useEffect(() => {
     if (!active) return;
@@ -153,6 +164,7 @@ export const createGauge = (variant) => function GaugeSlot(props) {
         ? `${t('calibration')} ×${calibration.factor.toFixed(2)} · ${t('samples', { n: calibration.samples })}`
         : t('notCalibrated');
 
+  const turnText = formatTurn(engine.getLastTurn(), t);
   const vm = {
     style: snapshot.style,
     density,
@@ -176,7 +188,7 @@ export const createGauge = (variant) => function GaugeSlot(props) {
     source,
     sourceText,
     calibrationText,
-    turnText: formatTurn(engine.getLastTurn(), t),
+    turnText: turnText ? `${t('turnLabel')}${turnText}` : '',
     scale: snapshot.scale,
     revision,
   };

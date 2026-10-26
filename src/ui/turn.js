@@ -7,7 +7,7 @@ const formatTokens = (tokens) => (tokens < 1000 ? String(Math.round(tokens)) : `
 /**
  * @param {{ ttftMs: number|null, tokens: number, avgTps: number|null }|null} turn
  * @param {Function} t
- * @returns {string} empty when no turn has produced output yet.
+ * @returns {string} the readings without a label; empty before any output.
  */
 export const formatTurn = (turn, t) => {
   if (turn === null) return '';
@@ -15,5 +15,5 @@ export const formatTurn = (turn, t) => {
   if (turn.ttftMs !== null) parts.push(t('turnTtft', { v: formatMs(turn.ttftMs) }));
   if (turn.avgTps !== null) parts.push(t('turnAvg', { v: Math.round(turn.avgTps) }));
   parts.push(t('turnTokens', { v: formatTokens(turn.tokens) }));
-  return `${t('turnLabel')} ${parts.join(' · ')}`;
+  return parts.join(' · ');
 };

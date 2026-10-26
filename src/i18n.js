@@ -124,7 +124,7 @@ const EN = {
   currentPlacement: 'Currently {where}',
   ariaGaugeStatic: 'Live speed {tps} tok/s, context {ctx}, cache hit {hit}',
   ariaGaugeClassic: 'Live speed {tps} tok/s, context {ctx}, cache hit {hit}',
-  turnLabel: 'Last turn:',
+  turnLabel: 'Last turn: ',
   turnTtft: 'first token {v}',
   turnAvg: 'avg ≈ {v} tok/s',
   turnTokens: '≈ {v} tok',

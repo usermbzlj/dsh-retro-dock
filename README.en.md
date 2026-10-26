@@ -74,7 +74,7 @@ After installing, check that `~/.dsh/profiles/<profile>/package.json` has `@loca
 npm pack   # local-retro-dock-1.5.0.tgz
 ```
 
-> The 1.1.0 four-style release remains available from the tag / Release. `main` is 1.4.0: classic plus seven measuring languages.
+> The 1.1.0 four-style release remains available from the tag / Release. `main` is 1.5.0: classic plus seven measuring languages.
 
 ## Interaction
 
@@ -108,7 +108,7 @@ All seven languages read the same data. The Chart trace only records samples aft
 ```bash
 npm install
 npm run build      # src/ -> client.js
-npm test           # 63 tests
+npm test           # 67 tests
 npm run preview    # docs/gallery.html (classic specimens + settings)
 npm run catalogue  # docs/catalogue.html (seven-language catalogue)
 npm run shots      # needs Chromium: npx playwright install chromium
@@ -141,7 +141,7 @@ Tests cover pure measurement, incremental counting, window/calibration, preferen
 
 ## Verification
 
-- Automation: 63/63 pass; the classic gauge, all seven new mechanisms and the settings style picker render in Chromium.
+- Automation: 67/67 pass; the classic gauge, all seven new mechanisms and the settings style picker render in Chromium.
 - Catalogue: `docs/catalogue.html` renders at 1440px with 91 real 1× instrument instances; light/dark hosts, six states, 2× craft details and a minimal-density comparison are in the page.
 - Contrast: primary and secondary text is ≥4.5:1; arcs, needles, lamps and limit marks are ≥3:1. The light Signal amber was deepened to 4.3:1; the light Altimeter limit red to 5.0:1.
 - Real host: no real-session trace yet. After a refresh/restart the tooltip should say `数据源 宿主统计`; if it says `页面文本` or stays on "waiting for host stats", please report the tooltip text and host version.

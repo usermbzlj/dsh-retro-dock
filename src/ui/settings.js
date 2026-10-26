@@ -14,8 +14,28 @@ import { formatTurn } from './turn.js';
 
 const h = (...args) => R.h(...args);
 
+/** Re-render at most twice a second while tokens arrive, for the turn row. */
+const useActivityTick = () => {
+  const [, setTick] = R.useState(0);
+  R.useEffect(() => {
+    let timer = 0;
+    const off = engine.onActivity(() => {
+      if (timer) return;
+      timer = setTimeout(() => {
+        timer = 0;
+        setTick((value) => value + 1);
+      }, 500);
+    });
+    return () => {
+      off();
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+};
+
 const downloadLog = () => {
-  if (typeof document === 'undefined' || typeof Blob !== 'function' || typeof URL === 'undefined') return;
+  if (typeof document === 'undefined' || !document.body || typeof Blob !== 'function'
+    || typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') return;
   const payload = { ...engine.exportLog(), version: VERSION, exportedAt: new Date().toISOString() };
   const url = URL.createObjectURL(new Blob([JSON.stringify(payload)], { type: 'application/json' }));
   const link = document.createElement('a');
@@ -112,6 +132,7 @@ const StylePicker = ({ value, lang, t, onChange, scale, warnAt, sub }) => h('div
 export const SettingsControls = ({ t, lang }) => {
   const snapshot = usePrefs();
   useEngineVersion();
+  useActivityTick();
   const calibration = engine.getCalibration();
   const calibrationText = calibration.status === 'pending'
     ? t('calibrationPending')
@@ -189,7 +210,7 @@ export const SettingsControls = ({ t, lang }) => {
     h(Field, { label: t('turnTitle') },
       h('div', { className: 'rg-calib' },
         h('span', { className: 'rg-calib-text rg-turn-text' },
-          formatTurn(engine.getLastTurn(), t).replace(t('turnLabel'), '').trim() || t('turnEmpty')))),
+          formatTurn(engine.getLastTurn(), t) || t('turnEmpty')))),
     h(Field, { label: t('calibration'), hint: t('exportLogHint') },
       h('div', { className: 'rg-calib' },
         h('span', { className: 'rg-calib-text' }, calibrationText),

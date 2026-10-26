@@ -20,6 +20,8 @@ const MAX_PLAUSIBLE_RATIO = 4;
 const TURN_GAP_MS = 3000;
 // Gaps longer than this (tool waits, stalls) are not decode time.
 const TURN_ACTIVE_GAP_MS = 1500;
+// Upper bound for the average: no decode is faster than this.
+const TURN_MAX_TPS = 600;
 const LOG_LIMIT = 20000;
 
 /**
@@ -45,13 +47,20 @@ export const createEngine = (options = {}) => {
   let lastStatsKey = '';
   let previousDecodeMs = 0;
   let previousStatsAt = 0;
+  let previousDecodeTokens = 0;
+  let previousEstimated = 0;
 
+  let turnActive = null;
+  let turnEndedAt = null;
   let turn = null;
+  let previousTurn = null;
+  let skipNextTurnDelta = false;
   let log = [];
 
   const record = (entry) => {
     log.push(entry);
-    if (log.length > LOG_LIMIT) log = log.slice(log.length - LOG_LIMIT);
+    // Trim in batches so a full log does not copy itself on every token.
+    if (log.length > LOG_LIMIT * 1.25) log = log.slice(log.length - LOG_LIMIT);
   };
 
   const rebaseCalibration = (decodeTokens) => {
@@ -65,26 +74,28 @@ export const createEngine = (options = {}) => {
   };
 
   const startTurn = (startAt) => {
+    if (turn !== null && turn.firstAt !== null) previousTurn = turn;
     turn = { startAt, firstAt: null, lastAt: null, tokens: 0, activeTokens: 0, activeMs: 0 };
   };
 
   const noteTurn = (delta, at) => {
     const gap = turn && turn.lastAt !== null ? at - turn.lastAt : 0;
-    if (turn === null || (running !== true && turn.lastAt !== null && gap > TURN_GAP_MS)) startTurn(null);
+    if (turn === null || (turnActive !== true && turn.lastAt !== null && gap > TURN_GAP_MS)) startTurn(null);
     if (turn.firstAt === null) {
       turn.firstAt = at;
     } else if (gap > 0 && gap <= TURN_ACTIVE_GAP_MS) {
       // The first delta has no measured duration, so only later deltas feed
-      // the average.
+      // the average. A block that lands at once (tool arguments) is capped so
+      // it cannot claim an impossible speed.
       turn.activeMs += gap;
-      turn.activeTokens += delta;
+      turn.activeTokens += Math.min(delta, (gap / 1000) * TURN_MAX_TPS);
     }
     turn.tokens += delta;
     turn.lastAt = at;
   };
 
-  const markActivity = (delta, at) => {
-    noteTurn(delta, at);
+  const markActivity = (delta, at, countTurn = true) => {
+    if (countTurn) noteTurn(delta, at);
     record({ t: Math.round(at), k: 'tok', d: Math.round(delta * 100) / 100 });
     lastNoteAt = Math.max(lastNoteAt, at);
     for (const listener of activityListeners) listener();
@@ -106,7 +117,10 @@ export const createEngine = (options = {}) => {
       // zero at every step/HIT refresh.
       if (result.delta > 0) {
         rate.note(result.delta, at);
-        markActivity(result.delta, at);
+        // The first delta after switching to the store recounts the whole
+        // partial; it is not new output for the turn.
+        markActivity(result.delta, at, !skipNextTurnDelta);
+        skipNextTurnDelta = false;
       }
       return result;
     },
@@ -135,6 +149,7 @@ export const createEngine = (options = {}) => {
         // realign the calibration baseline with the fresh session total.
         counter.reset();
         rate.resetGeneration();
+        skipNextTurnDelta = true;
         lastEstimated = rate.estimatedTotal();
         if (sessionDecode !== null) lastRealDecode = sessionDecode;
       }
@@ -148,28 +163,51 @@ export const createEngine = (options = {}) => {
      * @param {boolean|null} value host "running" flag.
      * @param {number} [at] monotonic timestamp; starts the turn clock.
      */
-    setRunning(value, at) {
+    setRunning(value) {
       const next = typeof value === 'boolean' ? value : null;
       if (next === running) return;
-      if (next === true && Number.isFinite(at)) startTurn(at);
       running = next;
-      if (Number.isFinite(at)) record({ t: Math.round(at), k: 'run', v: next });
       emit();
     },
 
     /**
-     * The most recent turn, in progress or finished. Tokens and speed carry the
-     * current calibration factor; `ttftMs` is null without a host running flag.
+     * The host's own turn flag (`state.running`), not one derived from tool
+     * calls. A rising edge starts the first-token clock; a flap shorter than
+     * the turn gap (between tool calls) continues the current turn.
+     *
+     * @param {boolean|null} value
+     * @param {number} at monotonic timestamp.
+     */
+    setTurnActive(value, at) {
+      const next = typeof value === 'boolean' ? value : null;
+      if (next === turnActive) return;
+      const known = Number.isFinite(at);
+      if (next === true) {
+        const flap = turnEndedAt !== null && known && at - turnEndedAt < TURN_GAP_MS && turn !== null;
+        if (!flap) startTurn(known ? at : null);
+      } else if (turnActive === true) {
+        turnEndedAt = known ? at : null;
+        emit();
+      }
+      turnActive = next;
+      if (known) record({ t: Math.round(at), k: 'run', v: next });
+    },
+
+    /**
+     * The most recent turn with output: the current one once it has produced
+     * a token, otherwise the previous one. Tokens and speed carry the current
+     * calibration factor; `ttftMs` is null without a host turn flag.
      *
      * @returns {{ ttftMs: number|null, tokens: number, avgTps: number|null }|null}
      */
     getLastTurn() {
-      if (turn === null || turn.firstAt === null) return null;
-      const factor = rate.snapshot().calibration;
+      const shown = turn !== null && turn.firstAt !== null ? turn : previousTurn;
+      if (shown === null) return null;
+      const factor = rate.calibration();
       return {
-        ttftMs: turn.startAt === null ? null : Math.max(0, turn.firstAt - turn.startAt),
-        tokens: turn.tokens * factor,
-        avgTps: turn.activeMs >= 500 ? (turn.activeTokens * factor) / (turn.activeMs / 1000) : null,
+        ttftMs: shown.startAt === null ? null : Math.max(0, shown.firstAt - shown.startAt),
+        tokens: shown.tokens * factor,
+        avgTps: shown.activeMs >= 500 ? (shown.activeTokens * factor) / (shown.activeMs / 1000) : null,
       };
     },
 
@@ -228,8 +266,12 @@ export const createEngine = (options = {}) => {
 
       const decodeMsDelta = decodeMs - previousDecodeMs;
       const elapsed = at - previousStatsAt;
+      const intervalReal = decodeTokens - previousDecodeTokens;
+      const intervalEstimated = rate.estimatedTotal() - previousEstimated;
       previousDecodeMs = decodeMs;
       previousStatsAt = at;
+      previousDecodeTokens = decodeTokens;
+      previousEstimated = rate.estimatedTotal();
 
       if (sessionDecode === null) {
         sessionDecode = decodeTokens;
@@ -250,10 +292,17 @@ export const createEngine = (options = {}) => {
       }
 
       sessionDecode = decodeTokens;
-      if (decodeMsDelta < 0 || decodeMsDelta > elapsed * STATS_CLOCK_SLACK + STATS_CLOCK_SLACK_MS) {
-        // Switching to a longer conversation raises the totals instead of
-        // dropping them. That jump is not decode the meter observed, so the
-        // baseline moves without a sample; the learned factor stays valid.
+      // Switching to a longer conversation raises the totals instead of
+      // dropping them. That jump is not decode the meter observed, so the
+      // baseline moves without a sample; the learned factor stays valid. Two
+      // independent tells: decode time outrunning the wall clock, and host
+      // tokens growing in an interval where the meter saw almost nothing
+      // (an idle user switching conversations passes the clock check).
+      const clockJump = !Number.isFinite(elapsed)
+        || decodeMsDelta < 0
+        || decodeMsDelta > elapsed * STATS_CLOCK_SLACK + STATS_CLOCK_SLACK_MS;
+      const unseenTokens = intervalReal >= 20 && intervalEstimated * MAX_PLAUSIBLE_RATIO < intervalReal;
+      if (clockJump || unseenTokens) {
         rebaseCalibration(decodeTokens);
         return;
       }
@@ -307,7 +356,11 @@ export const createEngine = (options = {}) => {
       lastStatsKey = '';
       previousDecodeMs = 0;
       previousStatsAt = 0;
+      previousDecodeTokens = 0;
+      previousEstimated = 0;
       turn = null;
+      previousTurn = null;
+      turnEndedAt = null;
       emit();
     },
 

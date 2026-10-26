@@ -51,10 +51,11 @@ The host's durable `sessionStats` projection exposes `decodeTokens` and
    sub-dial/projection refresh would zero the main needle. A generation restart
    keeps the learned factor; a cleared partial resets only the counter, so the
    rate window can decay smoothly instead of snapping to zero.
-5. Switching to a longer conversation **raises** the host totals instead. Decode
-   time cannot accrue faster than the wall clock, so when `decodeMs` grows by
-   more than 1.5× the elapsed time plus 2 s (or goes backwards), the baseline
-   is rebased without taking a sample; the learned factor is kept.
+5. Switching to a longer conversation **raises** the host totals instead. The
+   baseline is rebased without a sample (the learned factor is kept) when
+   `decodeMs` grows by more than 1.5× the elapsed time plus 2 s or goes
+   backwards, or when host tokens grow by 20+ between two stats samples while
+   the meter saw less than a quarter of that.
 6. A sample whose raw ratio is outside **0.25–4** is rejected and the baseline
    rebased. Such a ratio means the two deltas do not cover the same decode; it
    is not clamped into the factor.
@@ -70,6 +71,33 @@ Calibration state is explicit:
 - **available** — a valid sample exists; `0 samples` means “not calibrated yet”.
 - **unavailable** — a valid sample was seen before and has since disappeared or
   become invalid.
+
+## Last turn
+
+Shown in the tooltip and on the settings page; an estimate, like the rate.
+
+- **Turn boundary**: the host's own `running` flag. A rising edge starts the
+  turn clock; a fall and rise within 3 s (between tool calls) continues the
+  same turn. `legacy.runningCalls` is not used: it means a tool is running.
+  Without the flag, a 3 s pause in output starts a new turn.
+- **First token**: time from the rising edge to the first counted output
+  delta. Omitted when the host has no turn flag.
+- **Average**: tokens over active decode time. Gaps over 1.5 s (tool waits,
+  stalls) are not decode time; the first delta has no measured duration and is
+  left out; a single delta counts at most 600 tok/s of its gap, so a tool
+  argument block landing at once cannot claim an impossible speed. Needs at
+  least 0.5 s of active time.
+- **Tokens**: estimated output tokens in the turn. Tokens and speed carry the
+  current calibration factor.
+- A new turn keeps showing the previous one until it produces output.
+
+## Measurement log
+
+Settings → Export measurement log downloads JSON (`retro-dock-log/1`): token
+deltas (`tok`), host `sessionStats` (`stats`), turn-flag flips (`run`) and
+accepted calibration samples (`cal`), each with a monotonic timestamp, plus
+the current factor. No conversation text. The log keeps the latest 20 000
+entries and never leaves the page unless exported.
 
 ## Context occupancy (`CTX`)
 
@@ -137,7 +165,7 @@ Calibration state is explicit:
 
 ## Verification
 
-- `npm test` — 63 tests:
+- `npm test` — 67 tests:
   - measurement pure functions and host-compatible HIT formatting;
   - incremental stream counting, rewind/reset behaviour;
   - 1.2 s window, calibration deltas, bounds, generation/session resets;
