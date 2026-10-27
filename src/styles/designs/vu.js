@@ -14,14 +14,14 @@ export const VU_CSS = String.raw`
   --vu-muted: #6b5b45;
   --vu-red: #ae3627;
   --vu-peak: rgba(42, 33, 25, .22);
-  --vu-w: 128px;
-  --vu-h: 56px;
-  --vu-scale: 30px;
-  --vu-row: 17px;
-  --vu-value: 17px;
-  --vu-side: 9.5px;
-  --vu-tag: 7.5px;
-  --vu-unit: 7.5px;
+  --vu-w: 156px;
+  --vu-h: 68px;
+  --vu-scale: 38px;
+  --vu-row: 20px;
+  --vu-value: 20px;
+  --vu-side: 11px;
+  --vu-tag: 8.5px;
+  --vu-unit: 8.5px;
   height: auto;
   gap: 0;
   padding: 0;
@@ -44,25 +44,25 @@ export const VU_CSS = String.raw`
 }
 
 .rg-gauge[data-style="vu"][data-variant="input"][data-density="full"] {
-  --vu-w: 128px;
-  --vu-h: 56px;
-  --vu-scale: 30px;
-  --vu-row: 17px;
-  --vu-value: 17px;
-  --vu-side: 9.5px;
-  --vu-tag: 7.5px;
-  --vu-unit: 7.5px;
+  --vu-w: 156px;
+  --vu-h: 68px;
+  --vu-scale: 38px;
+  --vu-row: 20px;
+  --vu-value: 20px;
+  --vu-side: 11px;
+  --vu-tag: 8.5px;
+  --vu-unit: 8.5px;
 }
 
 .rg-gauge[data-style="vu"][data-variant="input"][data-density="compact"] {
-  --vu-w: 116px;
-  --vu-h: 48px;
-  --vu-scale: 25px;
-  --vu-row: 15px;
-  --vu-value: 15px;
-  --vu-side: 9px;
-  --vu-tag: 7.5px;
-  --vu-unit: 7.5px;
+  --vu-w: 136px;
+  --vu-h: 60px;
+  --vu-scale: 33px;
+  --vu-row: 18px;
+  --vu-value: 18px;
+  --vu-side: 10px;
+  --vu-tag: 8px;
+  --vu-unit: 8px;
 }
 
 .rg-gauge[data-style="vu"][data-variant="dock"][data-density="full"] {
@@ -150,7 +150,8 @@ export const VU_CSS = String.raw`
   fill: var(--vu-ink);
   opacity: .88;
   font-family: Constantia, Cambria, Georgia, "DejaVu Serif", serif;
-  font-size: 11px;
+  /* SVG 坐标单位：输入位约 1.1 倍缩放，渲染出来约 8px */
+  font-size: 7px;
   font-variant-numeric: lining-nums tabular-nums;
 }
 

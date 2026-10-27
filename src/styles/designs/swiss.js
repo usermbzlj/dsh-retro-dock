@@ -24,6 +24,8 @@ export const SWISS_CSS = String.raw`
 }
 
 [data-ds-dark-theme] .rg-gauge[data-style="swiss"] {
+  --swiss-ink: var(--dsw-alias-label-primary, #e8eefc);
+  --swiss-muted: var(--dsw-alias-label-tertiary, rgba(232, 238, 252, .62));
   --swiss-red: #f07e68;
 }
 

@@ -21,10 +21,8 @@ const labelPoint = (pct) => pointAt(pct, 23.4, FAN);
 export const VuBody = ({ vm, t }) => {
   const scale = Number(vm.scale) || 180;
   const showSub = vm.sub !== false;
-  const dock = vm.placement === 'dock';
-  const labels = dock
-    ? [0, scale]
-    : [0, 0.25, 0.5, 0.75, 1].map((part) => Math.round(scale * part));
+  // 统计条太矮，刻度字读不出来，只留刻线和红区；输入位只印 0 / 中点 / 满量程，避免挤在弧上
+  const labels = vm.placement === 'dock' ? [] : [0, Math.round(scale / 2), scale];
 
   const scaleSvg = h('svg', {
     className: 'rgx-vu-scale rgx-mechanism',

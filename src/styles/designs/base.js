@@ -13,7 +13,8 @@ export const DESIGN_BASE_CSS = String.raw`
 
 .rg-gauge .rgx-drum-col {
   display: inline-block;
-  width: .7em;
+  width: .6em;
+  text-align: center;
   height: 1em;
   overflow: hidden;
 }

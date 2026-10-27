@@ -68,8 +68,8 @@ export const CLASSIC_CSS = String.raw`
   outline-offset: 3px;
 }
 
-.rg-gauge[data-variant="input"][data-density="full"] { --rg-size: 56px; --rg-value-size: 18px; }
-.rg-gauge[data-variant="input"][data-density="compact"] { --rg-size: 50px; --rg-value-size: 16px; }
+.rg-gauge[data-variant="input"][data-density="full"] { --rg-size: 64px; --rg-value-size: 21px; }
+.rg-gauge[data-variant="input"][data-density="compact"] { --rg-size: 56px; --rg-value-size: 18px; }
 .rg-gauge[data-variant="input"][data-density="minimal"] { --rg-size: 44px; --rg-value-size: 15px; }
 .rg-gauge[data-variant="dock"][data-density="full"] { --rg-size: 42px; --rg-value-size: 16px; }
 .rg-gauge[data-variant="dock"][data-density="compact"] { --rg-size: 38px; --rg-value-size: 15px; }
