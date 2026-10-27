@@ -87,6 +87,11 @@ export const VU_CSS = String.raw`
   --vu-unit: 7.5px;
 }
 
+/* 状态栏里的 VU 太窄，放不下三颗灯；CTX 数值本身仍按警戒/危险变色 */
+.rg-gauge[data-style="vu"][data-variant="dock"] .rgx-lamps {
+  display: none;
+}
+
 .rg-gauge[data-style="vu"] .rgx-vu {
   display: inline-flex;
 }

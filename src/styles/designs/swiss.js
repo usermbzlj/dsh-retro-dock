@@ -163,8 +163,9 @@ export const SWISS_CSS = String.raw`
   left: 0;
   width: 6px;
   height: 6px;
+  margin-left: -3px;
   background: var(--swiss-ink);
-  transition: transform .12s linear;
+  transition: left .12s linear;
 }
 
 .rg-gauge[data-style="swiss"][data-over="1"] .rgx-swiss-rate-cursor {
@@ -224,8 +225,9 @@ export const SWISS_CSS = String.raw`
   left: 0;
   width: 4px;
   height: 4px;
+  margin-left: -2px;
   background: var(--swiss-ink);
-  transition: transform .12s linear;
+  transition: left .12s linear;
 }
 
 .rg-gauge[data-style="swiss"] .rgx-swiss-mini-mark {

@@ -10,8 +10,6 @@ import {
   h,
 } from './kit.js';
 
-const cursorShift = (pct, width) => `translateX(calc(${pct}% - ${width / 2}px))`;
-
 export const SwissBody = ({ vm, t }) => {
   const warnAt = clampPct(vm.warnAt ?? 80);
   const ctxKnown = vm.ctxKnown !== false;
@@ -27,7 +25,8 @@ export const SwissBody = ({ vm, t }) => {
     })),
     h('span', {
       className: 'rgx-swiss-rate-cursor',
-      style: { transform: cursorShift(position, 6) },
+      // left 百分比相对整根尺子；居中偏移由 CSS 的 margin-left 负责
+      style: { left: `${position}%` },
     }));
 
   const sub = showSub ? h('span', { className: 'rgx-swiss-sub' },
@@ -41,7 +40,7 @@ export const SwissBody = ({ vm, t }) => {
       },
         ctxKnown ? h('span', {
           className: 'rgx-swiss-mini-cursor',
-          style: { transform: cursorShift(ctx, 4) },
+          style: { left: `${ctx}%` },
         }) : null,
         h('span', {
           className: 'rgx-swiss-mini-mark',

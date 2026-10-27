@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.6.1 — 2026-10-27
+
+### Fixed
+
+- **VU scale labels overlapped** above the composer (five 11-unit labels on a 116° arc). Now three labels (0 / half / full) at 7 units; the dock drops them.
+- **Swiss cursors stuck at the left end**: `translateX(%)` is relative to the cursor itself, not the rule. Back to `left: %`.
+- Swiss fallback ink was black on the dark host when host tokens are missing.
+- Drum digit columns were too wide (`.6em`, centred). VU hides CTX lamps in the stats-bar dock where they collided with the readout.
+
+### Changed
+
+- Above the composer the gauges are larger: VU 156×68 (compact 136×60), classic dial 64px with 21px digits (compact 56 / 18).
+- `review/states-shoot.mjs` renders every look × placement × state (idle, over-range, alert, unknown CTX, stale, drum + lamps) in light and dark for visual checks.
+
 ## 1.6.0 — 2026-10-26
 
 ### Changed
