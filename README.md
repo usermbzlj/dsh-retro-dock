@@ -1,36 +1,31 @@
 # DSH Retro Dock
 
-DeepSeek Harness 输入区仪表：实时生成速度、上下文占用与会话缓存命中。保留经典双表盘，并提供七种可选的测量语言——台表、广播 VU、高度表、信号楼、记录纸、瑞士尺、罗经。样式在宿主「设置 → Retro Dock → 样式」里切换，默认仍是经典双表盘。1.5.0 新增「最近一轮」读数（首 token 延迟、平均速度、输出量）和测量日志导出。
+DeepSeek Harness 输入区仪表：实时生成速度、上下文占用与会话缓存命中。默认是经典双表盘，另有广播 VU、记录纸、瑞士尺三种外观。样式在「设置 → Retro Dock → 样式」里切换。经典和 VU 还可以把速度改成鼓轮、在上下文旁加三盏信号灯。
 
-![七种测量语言](docs/seven-languages-hero.jpg)
+![三种测量语言](docs/seven-languages-hero.jpg)
 
 ![经典双表盘 · 深色](docs/classic-dark.jpg)
 
 ![经典双表盘 · 浅色](docs/classic-light.jpg)
 
-> [七种测量语言 · 设计研究](docs/seven-designs.md) · [设置页 · 深色](docs/settings-dark.jpg) · [设置页 · 浅色](docs/settings-light.jpg) · [测量契约](MEASUREMENT.md) · [更新记录](CHANGELOG.md) · [English](README.en.md)
+> [设计研究](docs/seven-designs.md) · [设置页 · 深色](docs/settings-dark.jpg) · [设置页 · 浅色](docs/settings-light.jpg) · [测量契约](MEASUREMENT.md) · [更新记录](CHANGELOG.md) · [English](README.en.md)
 
-## 七种测量语言
+## 四种外观
 
 | 样式 | 机构 | 适合 |
 | --- | --- | --- |
-| **台表** Bench | 240° 刻线、刀锋针、凹窗压力条 | 精确、安静；浅色也成立，最接近经典 |
-| **广播 VU** | 130° 扇区、楔形针、印刷红区 | 长时间陪伴；暖色、有质量 |
-| **高度表** Altimeter | 270° 细针、三位鼓窗 | 数字优先；只想知道“多少” |
-| **信号楼** Signal | 臂板、三枚状态灯、机械计数器 | 先看清是否到警戒，再读具体值 |
-| **记录纸** Chart | 20 秒走纸、笔点、压力条 | 长生成时用余光看走势与掉速 |
-| **瑞士尺** Swiss | 数字、发丝标尺、方块游标 | 最安静；不要机器，只要一条读数 |
-| **罗经** Compass | 旋转罗经卡、黄铜圈、固定基准线 | 想要一个会动、但不抢注意力的对象 |
+| **经典** | 240° 双表盘、锥形针 | 默认；综合读数 |
+| **广播 VU** | 宽扇区、楔形针、超量程红区 | 长时间陪伴 |
+| **记录纸** | 20 秒走纸 | 余光看走势和掉速 |
+| **瑞士尺** | 数字、发丝尺、方块游标 | 最安静 |
 
-经典双表盘保留为第 8 个选项，也是默认值。七套新样式共用同一组 `vm`、同一套校准与同一组状态标记（live / warn / over / stale / DOM）；样式只改测量机构，不改测量口径。每套都在 56px 输入位与 42px 统计条上验收，并各自支持 full / compact / minimal。
-
-设置页的样式选择器用 42px 的真实预览展示 8 个选项；预览跟随当前位置、密度、满量程、警戒线与副表开关。宿主 800px 设置面板内是单列表单 + 两列预览，宽宿主仍保留右侧预览。交互式目录用 `npm run catalogue` 生成到 `docs/catalogue.html`，设计说明见 [七种测量语言](docs/seven-designs.md)。
+四种外观读同一组数据与校准。经典和 VU 可把速度改成鼓轮，并打开上下文三灯。设置页用 42px 真实预览展示 4 个选项。目录用 `npm run catalogue` 生成。设计说明见 [设计研究](docs/seven-designs.md)。
 
 ## 外观
 
 - **经典主表**：240° 量程，0 / 60 / 120 / 180 四个刻度，末端刻度加粗；锥形指针。默认 0–180 tok/s，可调 120 / 240 / 300。超过满量程后指针停在止挡，环进入青色过速辉光，数字继续上升；tooltip 会标出满量程。
 - **经典副表**：输入区完整密度为 38px 双环。CTX 在阈值以下是中性色，阈值处有一条 redline；越过阈值后弧段、数字和 `!` 同时转为警示色。HIT 保持青色，与 CTX 分开。
-- **七套样式**：台表、VU、高度表、信号楼、记录纸、瑞士尺、罗经。每套有自己的机构、表面、字体与运动；红色只用于界限。详细设计见 [设计研究](docs/seven-designs.md)。
+- **四种外观**：经典、广播 VU、记录纸、瑞士尺。红色只用于界限。详细设计见 [设计研究](docs/seven-designs.md)。
 - **位置**：点击仪表在「输入框上方」和「底部统计条」之间切换；hover / focus 有轻描边提示，选择持久化。
 - **密度**：输入位按宽度切换 full / compact / minimal（860 / 620）；统计条只有 full / minimal（560）。minimal 把仪表折成一行读数，警告时 CTX 项变橙并带 `!`。
 - **主题**：仪表跟随宿主明暗主题。台表、高度表、信号楼、记录纸在深色下拥有自己的深色表面；VU 在深色下是一块暖色的亮表；瑞士尺完全借宿主的墨与纸；罗经只让读数跟随宿主，卡仍是自己的对象。
@@ -41,7 +36,7 @@ DeepSeek Harness 输入区仪表：实时生成速度、上下文占用与会话
 
 - **主表**：实时 tok/s，读数带 `≈`。1.2 秒滑动窗口；流式内容增量计数；校准用宿主 `sessionStats` 的 token 增量，倍率限幅 0.4–2.5。`≈` 有固定槽位，live / idle 切换不会让居中仪表横移。
 - **副表**：CTX = 当前上下文占用；HIT = 全会话缓存命中。HIT 的精度与宿主统计条一致，不把部分命中舍成 100%。
-- **样式**：8 个选项（经典 + 七种测量语言）；设置页用 42px 真实预览；选中立即生效，不必刷新。
+- **样式**：4 个选项；设置页用 42px 真实预览；选中立即生效。经典和 VU 可开鼓轮读数与上下文三灯。
 - **设置**：样式、位置、密度、满量程、CTX 警告阈值、副表开关、语言、重置校准。全页尺度控件；预览使用当前满量程、警戒线和停靠位置，示例读数明确标注为“示例”。
 - **最近一轮**：首 token 延迟（宿主提供运行状态时）、去掉工具等待后的平均速度、输出 token 数；显示在 tooltip 和设置页。
 - **测量日志**：设置页「导出测量日志」下载一个 JSON，只含时间戳、token 计数、宿主统计与校准样本，不含对话内容；用于离线复盘校准。
@@ -74,7 +69,7 @@ pnpm add github:usermbzlj/dsh-retro-dock
 npm pack   # local-retro-dock-1.5.0.tgz
 ```
 
-> 1.1.0 的四套样式版本仍保留在 tag / Release 里；当前 `main` 是 1.5.0：经典 + 七种测量语言。
+> 1.1.0 的四套样式版本仍保留在 tag / Release 里；当前 `main` 是 1.6.0：经典 + VU + 记录纸 + 瑞士尺。
 
 ## 交互
 
@@ -108,7 +103,7 @@ npm pack   # local-retro-dock-1.5.0.tgz
 ```bash
 npm install
 npm run build      # 把 src/ 打包成 client.js
-npm test           # 67 项测试
+npm test           # 68 项测试
 npm run preview    # 生成 docs/gallery.html（经典样张与设置页）
 npm run catalogue  # 生成 docs/catalogue.html（七种测量语言目录）
 npm run shots      # 需要 Chromium：npx playwright install chromium

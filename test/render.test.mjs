@@ -66,7 +66,7 @@ test('a DOM fallback gets a visible quality badge', () => {
   const html = render({ ...createClassicVm(), source: 'dom' });
   assert.match(html, /class="rg-quality"/);
   assert.match(html, /data-quality="dom"/);
-  assert.match(html, />DOM</);
+  assert.match(html, />估</);
   assert.match(html, /页面文本/);
 });
 
@@ -95,7 +95,7 @@ test('the interactive gauge is a button with an action label', () => {
   assert.doesNotMatch(html, /aria-pressed/);
   assert.match(html, /当前在输入框上方/);
   assert.match(html, /切换到统计条/);
-  assert.match(html, /数据源 宿主统计/);
+  assert.match(html, /数据源 DeepSeek 用量统计/);
 });
 
 test('the static preview is inert and carries the needle position', () => {
@@ -130,17 +130,13 @@ const designRender = (style, extra = {}, props = {}) => renderToStaticMarkup(Rea
 }));
 
 const DESIGN_MARKERS = {
-  bench: [/rgx-bench-dial/, /rgx-bench-bar/, /rgx-bench-window/],
   vu: [/rgx-vu-scale/, /rgx-vu-redzone/, /rgx-vu-needle/],
-  altimeter: [/rgx-drum/, /rgx-alt-window/, /rgx-alt-bar/],
-  signal: [/rgx-signal-arm/, /rgx-signal-lamp is-on/, /rgx-signal-counter/],
   chart: [/rgx-chart-line/, /rgx-chart-pressure/, /rgx-chart-margin/],
   swiss: [/rgx-swiss-rule/, /rgx-swiss-mini-rule/, /rgx-swiss-rate-cursor/],
-  compass: [/rgx-compass-card/, /rgx-compass-ctx-fill/, /rgx-compass-read/],
 };
 
-test('all seven instrument languages render at 1x with their own mechanism', () => {
-  assert.equal(DESIGN_IDS.length, 7);
+test('the three instrument languages render at 1x with their own mechanism', () => {
+  assert.equal(DESIGN_IDS.length, 3);
   for (const style of DESIGN_IDS) {
     const html = designRender(style);
     assert.match(html, new RegExp('data-style="' + style + '"'));
@@ -156,7 +152,7 @@ test('every instrument keeps the same data contract in its own markup', () => {
     const html = designRender(style);
     assert.match(html, /65%/, style);
     assert.match(html, /99\.9%/, style);
-    assert.match(html, /数据源 宿主统计/, style);
+    assert.match(html, /数据源 DeepSeek 用量统计/, style);
   }
 });
 
@@ -165,35 +161,37 @@ test('minimal folds every instrument into the shared compact line', () => {
     const html = designRender(style, { density: 'minimal' });
     assert.match(html, /data-density="minimal"/, style);
     assert.match(html, /rgx-mini/, style);
-    assert.match(html, /CTX 65%/, style);
-    assert.match(html, /HIT 99\.9%/, style);
+    assert.match(html, /CTX/, style);
+    assert.match(html, /65%/, style);
+    assert.match(html, /HIT/, style);
+    assert.match(html, /99\.9%/, style);
   }
 });
 
 test('warning, over-range, DOM and stale stay visible on the new shell', () => {
-  const warn = designRender('signal', { ctx: 85 });
+  const warn = designRender('vu', { ctx: 85 });
   assert.match(warn, /data-warn="1"/);
-  assert.match(warn, /rgx-signal-alert/);
+  assert.match(warn, /rgx-vu-alert/);
 
-  const over = designRender('bench', { tps: 252 });
+  const over = designRender('chart', { tps: 252 });
   assert.match(over, /data-over="1"/);
-  assert.match(over, /rgx-bench-over-flag/);
 
   const dom = designRender('chart', { source: 'dom' });
   assert.match(dom, /class="rgx-quality"/);
-  assert.match(dom, />DOM</);
+  assert.match(dom, />估</);
 
-  const stale = designRender('compass', { stale: true });
+  const stale = designRender('swiss', { stale: true });
   assert.match(stale, /data-stale="1"/);
   assert.match(stale, /class="rgx-quality"/);
+  assert.match(stale, />停</);
 });
 
-test('an unknown CTX lights no signal lamp', () => {
-  const known = designRender('signal', { ctx: 20 });
-  assert.match(known, /rgx-signal-lamp is-on" data-lamp="green"/);
+test('an unknown CTX lights no lamp', () => {
+  const known = designRender('vu', { ctx: 20, ctxLamps: true });
+  assert.match(known, /data-level="ok"/);
 
-  const unknown = designRender('signal', { ctx: null });
-  assert.doesNotMatch(unknown, /is-on/);
+  const unknown = designRender('vu', { ctx: null, ctxLamps: true });
+  assert.match(unknown, /data-level="off"/);
   assert.match(unknown, /CTX[^<]*<\/span>[\s\S]*?—/);
 });
 

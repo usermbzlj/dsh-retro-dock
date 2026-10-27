@@ -1,8 +1,8 @@
 /** Text for the most recent turn: first-token latency, average speed, size. */
 
-const formatMs = (ms) => (ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`);
+export const formatMs = (ms) => (ms < 1000 ? `${Math.round(ms)} ms` : `${(ms / 1000).toFixed(1)} s`);
 
-const formatTokens = (tokens) => (tokens < 1000 ? String(Math.round(tokens)) : `${(tokens / 1000).toFixed(1)}k`);
+export const formatTokens = (tokens) => (tokens < 1000 ? String(Math.round(tokens)) : `${(tokens / 1000).toFixed(1)}k`);
 
 /**
  * @param {{ ttftMs: number|null, tokens: number, avgTps: number|null }|null} turn

@@ -1,12 +1,12 @@
 /**
- * Broadcast VU: a wide, shallow fan on a lit ivory face. The CTX threshold is
- * printed as the end of the scale's red zone; the peak lamp is the only non-
- * needle light. The face stays warm in a dark host on purpose — it is the one
- * light object in the room.
+ * Broadcast VU: a wide, shallow fan on a lit ivory face. The red zone is the
+ * over-range end of the speed scale; CTX warning lives in the side reading.
  */
 
 import {
   Approx,
+  Drum,
+  Lamps,
   arcPath,
   clampPct,
   h,
@@ -20,9 +20,11 @@ const labelPoint = (pct) => pointAt(pct, 23.4, FAN);
 
 export const VuBody = ({ vm, t }) => {
   const scale = Number(vm.scale) || 180;
-  const warnAt = clampPct(vm.warnAt ?? 80);
   const showSub = vm.sub !== false;
-  const labels = [0, 0.25, 0.5, 0.75, 1].map((part) => Math.round(scale * part));
+  const dock = vm.placement === 'dock';
+  const labels = dock
+    ? [0, scale]
+    : [0, 0.25, 0.5, 0.75, 1].map((part) => Math.round(scale * part));
 
   const scaleSvg = h('svg', {
     className: 'rgx-vu-scale rgx-mechanism',
@@ -31,7 +33,7 @@ export const VuBody = ({ vm, t }) => {
     'aria-hidden': 'true',
   },
   h('path', { className: 'rgx-vu-track', d: arcPath(0, 100, 29.5, FAN), fill: 'none' }),
-  h('path', { className: 'rgx-vu-redzone', d: arcPath(warnAt, 100, 29.6, FAN), fill: 'none' }),
+  h('path', { className: 'rgx-vu-redzone', d: arcPath(90, 100, 29.6, FAN), fill: 'none' }),
   h('g', { className: 'rgx-vu-ticks' },
     positions(20).map((pct, index) => tick(pct, 27.8, index % 5 === 0 ? 30.6 : 29.4, {
       ...FAN,
@@ -59,10 +61,16 @@ export const VuBody = ({ vm, t }) => {
       h('span', { className: 'rgx-vu-tag' },
         t('ctx'),
         vm.warn ? h('b', { className: 'rgx-vu-alert' }, '!') : null),
+      vm.ctxLamps ? h(Lamps, { vm }) : null,
       h('span', { className: 'rgx-vu-val' }, vm.ctxDisplay)) : null,
     h('span', { className: 'rgx-vu-main' },
       h(Approx, { live: vm.live }),
-      h('span', { className: 'rgx-vu-digits' }, vm.displayTps),
+      vm.readout === 'drum'
+        ? h(Drum, { value: vm.displayTps })
+        : h('span', { className: 'rgx-vu-digits' }, vm.displayTps),
+      (Number(vm.over) || 0) > 0
+        ? h('span', { className: 'rgx-vu-over', 'aria-hidden': 'true' }, '+')
+        : null,
       h('span', { className: 'rgx-vu-unit' }, t('unit'))),
     showSub ? h('span', { className: 'rgx-vu-side is-right' },
       h('span', { className: 'rgx-vu-tag' }, t('hit')),

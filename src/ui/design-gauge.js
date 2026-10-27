@@ -1,7 +1,7 @@
 /**
- * The shell shared by the seven instruments. It owns semantics, state flags,
- * the placement affordance, the quality flag and the compact minimal line; the
- * selected body owns the mechanism and all of its visual language.
+ * The shell shared by the three instrument languages beside classic. It owns
+ * semantics, state flags, the placement affordance, the quality flag and the
+ * compact minimal line; the selected body owns the mechanism.
  */
 
 import { R } from '../runtime.js';
@@ -22,7 +22,9 @@ const qualityFor = (vm) => {
   return null;
 };
 
-const qualityLabel = (quality) => (quality === 'stale' ? '!' : quality === 'mixed' ? 'MIX' : 'DOM');
+const qualityLabelKey = (quality) => (
+  quality === 'stale' ? 'qualityLabelStale' : quality === 'mixed' ? 'qualityLabelMixed' : 'qualityLabelDom'
+);
 
 /**
  * @param {{
@@ -33,7 +35,7 @@ const qualityLabel = (quality) => (quality === 'stale' ? '!' : quality === 'mixe
  * }} props
  */
 export const DesignGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
-  const style = vm.style && BODIES[vm.style] ? vm.style : 'bench';
+  const style = vm.style && BODIES[vm.style] ? vm.style : 'swiss';
   const Body = BODIES[style];
   const sourceText = vm.sourceText || t(sourceKey(vm.source || 'projection'));
   const quality = qualityFor(vm);
@@ -48,22 +50,23 @@ export const DesignGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
   const over = (Number(vm.over) || 0) > 0 || Number(vm.tps) > Number(vm.scale || 0);
 
   const titleParts = [];
+  if (interactive) titleParts.push(action);
   if (vm.stale) titleParts.push(t('sourceUnavailable'));
-  titleParts.push(`${t('tipRate', { tps: vm.displayTps })} · ${t('tipCtx', { ctx: vm.ctxDisplay })} · ${t('tipHit', { hit: vm.hitDisplay })}`);
+  titleParts.push(`${t('tipRate', { tps: vm.displayTps })} ${t('tipCtx', { ctx: vm.ctxDisplay })} ${t('tipHit', { hit: vm.hitDisplay })}`);
   if (vm.turnText) titleParts.push(vm.turnText);
   const metaParts = [t('scaleTooltip', { n: vm.scale }), t('warnAtTooltip', { n: vm.warnAt })];
   if (vm.calibrationText) metaParts.push(vm.calibrationText);
-  titleParts.push(metaParts.join(' · '));
+  titleParts.push(metaParts.join(' '));
   titleParts.push(`${t('source')} ${sourceText}`);
-  if (interactive) titleParts.push(action);
 
   const ariaParts = [
     t(vm.static ? 'ariaGaugeStatic' : 'ariaGaugeClassic', {
       tps: vm.displayTps,
-      ctx: vm.ctxDisplay,
+      ctx: vm.ctxKnown === false ? t('ctxUnknownAria') : vm.ctxDisplay,
       hit: vm.hitDisplay,
     }),
   ];
+  if (vm.ctxKnown === false) ariaParts.push(t('ctxUnknownAria'));
   if (vm.warn) ariaParts.push(t('warnAria'));
   if (vm.stale) ariaParts.push(t('sourceUnavailable'));
   ariaParts.push(`${t('source')} ${sourceText}`);
@@ -111,7 +114,7 @@ export const DesignGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
     'data-quality': quality,
     title: qualityTitle,
     'aria-hidden': 'true',
-  }, qualityLabel(quality)) : null,
+  }, t(qualityLabelKey(quality))) : null,
   interactive ? h('span', {
     className: 'rgx-affordance',
     'aria-hidden': 'true',
@@ -134,15 +137,17 @@ export const DesignGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
  * }} props
  */
 export const DesignPreview = ({
-  style = 'bench',
+  style = 'vu',
   placement = 'input',
   density = 'full',
   scale = 180,
   warnAt = 80,
   sub = true,
   ctx = 65,
+  readout = 'digits',
+  ctxLamps = false,
   t,
 }) => h(DesignGauge, {
-  vm: createVm({ style, placement, density, scale, warnAt, sub, ctx }),
+  vm: createVm({ style, placement, density, scale, warnAt, sub, ctx, readout, ctxLamps }),
   t,
 });

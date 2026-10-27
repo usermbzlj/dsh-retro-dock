@@ -69,14 +69,10 @@ export const SETTINGS_CSS = String.raw`
   text-overflow: ellipsis;
 }
 
-.rg-style-en {
+.rg-style-inuse {
   flex: 0 0 auto;
-  min-width: 0;
-  max-width: 50%;
-  overflow: hidden;
-  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
-  font-size: 9px;
-  color: var(--dsw-alias-label-tertiary);
+  font-size: 11px;
+  color: var(--dsw-alias-state-business-primary, #3f6fd8);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -208,7 +204,13 @@ export const SETTINGS_CSS = String.raw`
   color: var(--dsw-alias-label-primary);
 }
 
-.rg-seg button[aria-pressed="true"] {
+.rg-seg.is-disabled {
+  opacity: .55;
+  pointer-events: none;
+}
+
+.rg-seg button[aria-pressed="true"],
+.rg-seg button[aria-checked="true"] {
   background: var(--dsw-alias-bg-layer-1, #fff);
   color: var(--dsw-alias-label-primary);
   box-shadow: 0 1px 2px rgba(0, 0, 0, .12);
@@ -293,6 +295,30 @@ export const SETTINGS_CSS = String.raw`
 .rg-turn-text {
   color: var(--dsw-alias-label-secondary);
   font-variant-numeric: tabular-nums;
+}
+
+.rg-turn-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rg-turn-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.rg-turn-k {
+  font-size: 11px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.rg-turn-v {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsw-alias-label-primary);
 }
 
 .rg-btn {
@@ -478,9 +504,15 @@ export const SETTINGS_CSS = String.raw`
   }
 }
 
-@container rg-settings (max-width: 520px) {
+@container rg-settings (max-width: 400px) {
   .rg-style-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container rg-settings (max-width: 560px) {
+  .rg-settings-preview {
+    display: none;
   }
 }
 

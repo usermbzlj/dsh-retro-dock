@@ -199,19 +199,20 @@ test('the dock mounts, streams, switches styles and toggles placement', async ()
     settingsRoot.render(React.createElement(Settings));
   });
   const styleOptions = settingsHost.querySelectorAll('.rg-style-option');
-  assert.equal(styleOptions.length, 8, 'classic plus seven instrument languages');
+  assert.equal(styleOptions.length, 4, 'classic plus three instrument languages');
   assert.equal(settingsHost.querySelector('.rg-export-log').textContent, '导出测量日志');
-  assert.match(settingsHost.querySelector('.rg-turn-text').textContent, /^(还没有输出|.*tok)$/);  assert.equal(styleOptions[0].getAttribute('aria-label'), '经典 Classic');
+  assert.match(settingsHost.querySelector('.rg-turn-text').textContent, /速度|tok/);
+  assert.equal(styleOptions[0].getAttribute('aria-label'), '经典');
 
   await act(async () => {
     styleOptions[1].dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
   });
-  assert.equal(prefs.getSnapshot().style, 'bench');
+  assert.equal(prefs.getSnapshot().style, 'vu');
   assert.equal(styleOptions[1].getAttribute('aria-pressed'), 'true');
-  const benchGauge = container.querySelector('.rg-gauge[data-style="bench"]');
-  assert.ok(benchGauge.querySelector('.rgx-bench-dial'));
-  assert.ok(benchGauge.style.getPropertyValue('--rg-p'), 'switching styles must re-arm the meter loop on the new root');
-  assert.ok(settingsHost.querySelector('.rg-preview-stage .rg-gauge[data-style="bench"]'));
+  const vuGauge = container.querySelector('.rg-gauge[data-style="vu"]');
+  assert.ok(vuGauge.querySelector('.rgx-vu-scale'));
+  assert.ok(vuGauge.style.getPropertyValue('--rg-p'), 'switching styles must re-arm the meter loop on the new root');
+  assert.ok(settingsHost.querySelector('.rg-preview-stage .rg-gauge[data-style="vu"]'));
 
   assert.equal(settingsHost.querySelectorAll('.rg-style-option')[1].getAttribute('aria-pressed'), 'true');
 

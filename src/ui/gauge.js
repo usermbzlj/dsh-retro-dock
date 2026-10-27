@@ -12,6 +12,7 @@ import { createT } from '../i18n.js';
 import {
   cacheHitPercent,
   contextPercent,
+  dialPosition,
   formatCtx,
   formatHitFromUsage,
   formatHitPercent,
@@ -165,6 +166,7 @@ export const createGauge = (variant) => function GaugeSlot(props) {
         : t('notCalibrated');
 
   const turnText = formatTurn(engine.getLastTurn(), t);
+  const position = dialPosition(readout.tps, snapshot.scale);
   const vm = {
     style: snapshot.style,
     density,
@@ -172,6 +174,10 @@ export const createGauge = (variant) => function GaugeSlot(props) {
     live: readout.live,
     tps: readout.tps,
     displayTps: String(readout.tps),
+    readout: snapshot.readout,
+    ctxLamps: snapshot.ctxLamps,
+    position: position.position,
+    over: position.over,
     ctxValue: ctxValue ?? 0,
     ctxKnown: ctxValue !== null,
     ctxText,

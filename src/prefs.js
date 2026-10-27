@@ -1,6 +1,7 @@
 /**
- * Preference store. Owns placement, density, full scale, warning threshold,
- * sub-dial visibility and language. One localStorage key, a validated
+ * Preference store. Owns style, placement, density, full scale, warning
+ * threshold, sub-dial visibility, language, the speed readout (digits / drum)
+ * and the CTX lamps. One localStorage key, a validated
  * snapshot, and a subscription that React consumes with
  * `useSyncExternalStore`.
  */
@@ -27,6 +28,8 @@ const samePrefs = (left, right) => (
   && left.warnAt === right.warnAt
   && left.sub === right.sub
   && left.lang === right.lang
+  && left.readout === right.readout
+  && left.ctxLamps === right.ctxLamps
 );
 
 /**

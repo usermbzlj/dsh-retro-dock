@@ -18,8 +18,7 @@ export const CLASSIC_CSS = String.raw`
   --rg-caution-strong: #b45309;
   --rg-ctx: var(--rg-muted);
   --rg-hit: #0f766e;
-  --rg-over-color: #0f766e;
-  --rg-over-glow: rgba(15, 118, 110, .32);
+  --rg-over-color: var(--rg-ink);
   --rg-focus: var(--dsw-focus-ring-color, #2f5bc0);
   --rg-size: 56px;
   --rg-value-size: 18px;
@@ -27,7 +26,7 @@ export const CLASSIC_CSS = String.raw`
   --rg-tag-size: 10px;
   --rg-num-size: 12px;
   --rg-meta-size: 10px;
-  --rg-flag-size: 8px;
+  --rg-flag-size: 10px;
   display: inline-flex;
   align-items: center;
   gap: calc(var(--rg-size) * 0.36);
@@ -56,8 +55,7 @@ export const CLASSIC_CSS = String.raw`
   --rg-caution-strong: #ff9d7a;
   --rg-ctx: rgba(232, 238, 252, .66);
   --rg-hit: #74d6c0;
-  --rg-over-color: #b8fff5;
-  --rg-over-glow: rgba(95, 224, 207, .5);
+  --rg-over-color: #e8eefc;
   --rg-focus: var(--dsw-focus-ring-color, #7aa2ff);
 }
 
@@ -111,9 +109,8 @@ export const CLASSIC_CSS = String.raw`
 }
 
 .rg-arc-rate {
-  stroke: color-mix(in srgb, var(--rg-accent) calc((1 - var(--rg-over, 0)) * 100%), var(--rg-over-color));
+  stroke: var(--rg-accent);
   stroke-dasharray: calc(var(--rg-p, 0) * 0.712) 107;
-  filter: drop-shadow(0 0 calc(min(1, var(--rg-over, 0) * 3) * 5px) var(--rg-over-glow));
 }
 
 .rg-ticks line {
@@ -125,6 +122,11 @@ export const CLASSIC_CSS = String.raw`
 .rg-ticks .rg-tick-end {
   stroke: color-mix(in srgb, var(--rg-ink) 78%, transparent);
   stroke-width: 1.4;
+}
+
+.rg-gauge[data-over="1"] .rg-ticks .rg-tick-end {
+  stroke: var(--rg-ink);
+  stroke-width: 2;
 }
 
 .rg-needle-group {
@@ -153,6 +155,10 @@ export const CLASSIC_CSS = String.raw`
 
 .rg-dial-minor .rg-track {
   stroke-width: 1.2;
+}
+
+.rg-dial-minor .rg-track.is-unknown {
+  stroke-dasharray: 1.6 2.2;
 }
 
 .rg-dial-minor .rg-arc-ctx,
@@ -237,10 +243,16 @@ export const CLASSIC_CSS = String.raw`
   font-variant-numeric: tabular-nums;
 }
 
+.rg-over-mark {
+  margin-left: 1px;
+  color: var(--rg-caution-strong);
+  font-weight: 700;
+}
+
 .rg-unit {
   font-size: var(--rg-unit-size);
   font-weight: 500;
-  letter-spacing: .1em;
+  letter-spacing: 0;
   color: var(--rg-muted);
   line-height: 1;
 }
@@ -262,7 +274,7 @@ export const CLASSIC_CSS = String.raw`
 .rg-tag {
   font-size: var(--rg-tag-size);
   font-weight: 500;
-  letter-spacing: .08em;
+  letter-spacing: 0;
   color: var(--rg-muted);
 }
 
@@ -277,12 +289,12 @@ export const CLASSIC_CSS = String.raw`
 .rg-meta {
   display: none;
   align-items: baseline;
-  gap: 6px;
+  gap: 10px;
   margin-top: 0;
   font-size: var(--rg-meta-size);
   font-weight: 500;
   line-height: 1.2;
-  letter-spacing: .03em;
+  letter-spacing: 0;
   color: var(--rg-muted);
   white-space: nowrap;
 }
@@ -314,20 +326,21 @@ export const CLASSIC_CSS = String.raw`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 13px;
-  padding: 0 4px;
+  height: 15px;
+  padding: 0 3px;
   border: 1px solid currentColor;
   border-radius: 3px;
   color: var(--rg-muted);
   font-size: var(--rg-flag-size);
   font-weight: 600;
-  letter-spacing: .05em;
+  letter-spacing: 0;
   line-height: 1;
   flex: 0 0 auto;
 }
 
 .rg-quality[data-quality="stale"] {
-  color: var(--rg-caution);
+  color: var(--rg-muted);
+  border-style: dashed;
 }
 
 .rg-quality[data-quality="dom"],
@@ -345,6 +358,11 @@ export const CLASSIC_CSS = String.raw`
   line-height: 1;
   opacity: .8;
   pointer-events: none;
+}
+
+.rg-gauge:hover .rg-affordance,
+.rg-gauge:focus-visible .rg-affordance {
+  display: inline-block;
 }
 
 @media (hover: none) {

@@ -3,14 +3,14 @@
 import { R } from '../runtime.js';
 import { prefs } from '../prefs.js';
 import { engine } from '../engine.js';
-import { STYLES, SCALES, WARN_LEVELS } from '../themes.js';
+import { STYLES, SCALES, WARN_LEVELS, READOUTS } from '../themes.js';
 import { DESIGN_META } from '../designs/meta.js';
 import { createT } from '../i18n.js';
 import { usePrefs, useEngineVersion, useLang } from './hooks.js';
 import { ClassicPreview } from './classic.js';
 import { DesignPreview } from './design-gauge.js';
 import { VERSION } from '../version.js';
-import { formatTurn } from './turn.js';
+import { formatMs, formatTokens } from './turn.js';
 
 const h = (...args) => R.h(...args);
 
@@ -47,14 +47,25 @@ const downloadLog = () => {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 };
 
-const Seg = ({ value, options, onChange, label }) => h('div', {
-  className: 'rg-seg',
-  role: 'group',
+const Seg = ({ value, options, onChange, label, disabled = false }) => h('div', {
+  className: disabled ? 'rg-seg is-disabled' : 'rg-seg',
+  role: 'radiogroup',
   'aria-label': label,
+  onKeyDown: (event) => {
+    const delta = event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? -1
+      : event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 1 : 0;
+    if (!delta || disabled) return;
+    event.preventDefault();
+    const index = Math.max(0, options.findIndex((option) => option.value === value));
+    onChange(options[(index + delta + options.length) % options.length].value);
+  },
 }, options.map((option) => h('button', {
   key: option.value,
   type: 'button',
-  'aria-pressed': String(value === option.value),
+  role: 'radio',
+  'aria-checked': String(value === option.value),
+  tabIndex: value === option.value ? 0 : -1,
+  disabled,
   onClick: () => onChange(option.value),
 }, option.label)));
 
@@ -79,17 +90,13 @@ const styleName = (id, lang, t) => (
   id === 'classic' ? t('styleClassic') : DESIGN_META[id]?.name?.[lang] ?? id
 );
 
-const styleEnglish = (id) => (
-  id === 'classic' ? 'Classic' : DESIGN_META[id]?.name?.en ?? id
-);
-
-const StyleOption = ({ id, selected, lang, t, onSelect, scale, warnAt, sub }) => {
+const StyleOption = ({ id, selected, lang, t, onSelect, scale, warnAt, sub, readout, ctxLamps }) => {
   const Preview = id === 'classic' ? ClassicPreview : DesignPreview;
   return h('button', {
     type: 'button',
     className: selected ? 'rg-style-option is-selected' : 'rg-style-option',
     'aria-pressed': String(selected),
-    'aria-label': `${styleName(id, lang, t)} ${styleEnglish(id)}`,
+    'aria-label': styleName(id, lang, t),
     onClick: () => onSelect(id),
   },
   h('span', { className: 'rg-style-stage', 'aria-hidden': 'true' },
@@ -100,14 +107,16 @@ const StyleOption = ({ id, selected, lang, t, onSelect, scale, warnAt, sub }) =>
       scale,
       warnAt,
       sub,
+      readout,
+      ctxLamps,
       t,
     })),
   h('span', { className: 'rg-style-copy' },
     h('span', { className: 'rg-style-name' }, styleName(id, lang, t)),
-    h('span', { className: 'rg-style-en' }, styleEnglish(id))));
+    selected ? h('span', { className: 'rg-style-inuse' }, t('styleInUse')) : null));
 };
 
-const StylePicker = ({ value, lang, t, onChange, scale, warnAt, sub }) => h('div', {
+const StylePicker = ({ value, lang, t, onChange, scale, warnAt, sub, readout, ctxLamps }) => h('div', {
   className: 'rg-style-grid',
   role: 'group',
   'aria-label': t('styleTitle'),
@@ -121,6 +130,8 @@ const StylePicker = ({ value, lang, t, onChange, scale, warnAt, sub }) => h('div
   scale,
   warnAt,
   sub,
+  readout,
+  ctxLamps,
 })));
 
 /**
@@ -129,19 +140,36 @@ const StylePicker = ({ value, lang, t, onChange, scale, warnAt, sub }) => h('div
  *
  * @param {{ t: Function, lang: 'zh'|'en' }} props
  */
+const TurnTable = ({ turn, t }) => {
+  if (!turn) return t('turnEmpty');
+  return h('div', { className: 'rg-turn-grid' },
+    h('div', { className: 'rg-turn-col' },
+      h('span', { className: 'rg-turn-k' }, t('turnColTtft')),
+      h('span', { className: 'rg-turn-v' }, turn.ttftMs === null ? '—' : formatMs(turn.ttftMs))),
+    h('div', { className: 'rg-turn-col' },
+      h('span', { className: 'rg-turn-k' }, t('turnColAvg')),
+      h('span', { className: 'rg-turn-v' }, turn.avgTps === null ? '—' : `≈ ${Math.round(turn.avgTps)} tok/s`)),
+    h('div', { className: 'rg-turn-col' },
+      h('span', { className: 'rg-turn-k' }, t('turnColTokens')),
+      h('span', { className: 'rg-turn-v' }, `≈ ${formatTokens(turn.tokens)} tok`)));
+};
+
 export const SettingsControls = ({ t, lang }) => {
   const snapshot = usePrefs();
   useEngineVersion();
   useActivityTick();
+  const [exported, setExported] = R.useState(false);
   const calibration = engine.getCalibration();
   const calibrationText = calibration.status === 'pending'
     ? t('calibrationPending')
     : calibration.status === 'unavailable'
       ? t('calibrationUnavailable')
       : calibration.samples > 0
-        ? `${t('calibration')} ×${calibration.factor.toFixed(2)} · ${t('samples', { n: calibration.samples })}`
+        ? t('calibrationStatus', { factor: calibration.factor.toFixed(2), n: calibration.samples })
         : t('notCalibrated');
-
+  const panel = snapshot.style === 'classic' || snapshot.style === 'vu';
+  const logEmpty = engine.exportLog().entries.length === 0;
+  const turn = engine.getLastTurn();
   const set = (patch) => prefs.set(patch);
 
   return h('div', { className: 'rg-controls' },
@@ -153,7 +181,26 @@ export const SettingsControls = ({ t, lang }) => {
         scale: snapshot.scale,
         warnAt: snapshot.warnAt,
         sub: snapshot.sub,
+        readout: snapshot.readout,
+        ctxLamps: snapshot.ctxLamps,
         onChange: (style) => set({ style }),
+      })),
+    h(Field, { label: t('readoutTitle'), hint: panel ? t('readoutHint') : t('panelOnlyHint') },
+      h(Seg, {
+        value: snapshot.readout,
+        label: t('readoutTitle'),
+        disabled: !panel,
+        onChange: (readout) => set({ readout }),
+        options: READOUTS.map((id) => ({
+          value: id,
+          label: id === 'drum' ? t('readoutDrum') : t('readoutDigits'),
+        })),
+      })),
+    h(Field, { label: t('ctxLampsTitle'), hint: panel ? t('ctxLampsHint') : t('panelOnlyHint') },
+      h(Switch, {
+        checked: snapshot.ctxLamps,
+        label: t('ctxLampsSwitch'),
+        onChange: (ctxLamps) => panel && set({ ctxLamps }),
       })),
     h(Field, { label: t('placementTitle') },
       h(Seg, {
@@ -207,23 +254,33 @@ export const SettingsControls = ({ t, lang }) => {
       h('option', { value: 'auto' }, t('langAuto')),
       h('option', { value: 'zh' }, t('langZh')),
       h('option', { value: 'en' }, t('langEn')))),
-    h(Field, { label: t('turnTitle') },
-      h('div', { className: 'rg-calib' },
-        h('span', { className: 'rg-calib-text rg-turn-text' },
-          formatTurn(engine.getLastTurn(), t) || t('turnEmpty')))),
-    h(Field, { label: t('calibration'), hint: t('exportLogHint') },
+    h(Field, { label: t('measureTitle') },
+      h('div', { className: 'rg-turn-text' }, h(TurnTable, { turn, t }))),
+    h(Field, { label: t('calibration'), hint: t('calibrationHint') },
       h('div', { className: 'rg-calib' },
         h('span', { className: 'rg-calib-text' }, calibrationText),
         h('button', {
           type: 'button',
           className: 'rg-btn rg-btn-quiet',
-          onClick: () => engine.resetCalibration(),
-        }, t('resetCalibration')),
+          onClick: () => {
+            const ok = typeof window === 'undefined' || typeof window.confirm !== 'function'
+              || window.confirm(t('resetConfirm'));
+            if (ok) engine.resetCalibration();
+          },
+        }, t('resetCalibration')))),
+    h(Field, { label: t('logTitle'), hint: t('exportLogHint') },
+      h('div', { className: 'rg-calib' },
         h('button', {
           type: 'button',
-          className: 'rg-btn rg-btn-quiet rg-export-log',
-          onClick: downloadLog,
-        }, t('exportLog')))));
+          className: 'rg-btn rg-export-log',
+          disabled: logEmpty,
+          onClick: () => {
+            downloadLog();
+            setExported(true);
+          },
+        }, t('exportLog')),
+        h('span', { className: 'rg-calib-text', 'aria-live': 'polite' },
+          exported ? t('exported') : (logEmpty ? t('logEmpty') : '')))));
 };
 
 const densityLabel = (density, t) => {
@@ -265,6 +322,8 @@ export const SettingsSection = () => {
         scale: snapshot.scale,
         warnAt: snapshot.warnAt,
         sub: snapshot.sub,
+        readout: snapshot.readout,
+        ctxLamps: snapshot.ctxLamps,
         t,
       })));
 

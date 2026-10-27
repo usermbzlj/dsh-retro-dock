@@ -10,11 +10,12 @@ import {
   h,
 } from './kit.js';
 
-const cursorLeft = (pct, width) => `calc(${pct}% - ${width / 2}px)`;
+const cursorShift = (pct, width) => `translateX(calc(${pct}% - ${width / 2}px))`;
 
 export const SwissBody = ({ vm, t }) => {
   const warnAt = clampPct(vm.warnAt ?? 80);
-  const ctx = clampPct(vm.ctxValue || 0);
+  const ctxKnown = vm.ctxKnown !== false;
+  const ctx = ctxKnown ? clampPct(vm.ctxValue || 0) : 0;
   const showSub = vm.sub !== false;
   const position = clampPct(vm.position);
 
@@ -26,26 +27,29 @@ export const SwissBody = ({ vm, t }) => {
     })),
     h('span', {
       className: 'rgx-swiss-rate-cursor',
-      style: { left: cursorLeft(position, 6) },
+      style: { transform: cursorShift(position, 6) },
     }));
 
   const sub = showSub ? h('span', { className: 'rgx-swiss-sub' },
     h('span', { className: 'rgx-swiss-ctx' },
       h('span', { className: 'rgx-swiss-label' },
-        'ctx',
+        t('ctx'),
         vm.warn ? h('b', { className: 'rgx-swiss-alert' }, '!') : null),
-      h('span', { className: 'rgx-swiss-mini-rule rgx-mechanism', 'aria-hidden': 'true' },
-        h('span', {
+      h('span', {
+        className: ctxKnown ? 'rgx-swiss-mini-rule rgx-mechanism' : 'rgx-swiss-mini-rule rgx-mechanism is-unknown',
+        'aria-hidden': 'true',
+      },
+        ctxKnown ? h('span', {
           className: 'rgx-swiss-mini-cursor',
-          style: { left: cursorLeft(ctx, 4) },
-        }),
+          style: { transform: cursorShift(ctx, 4) },
+        }) : null,
         h('span', {
           className: 'rgx-swiss-mini-mark',
           style: { left: `${warnAt}%` },
         })),
       h('span', { className: 'rgx-swiss-value' }, vm.ctxDisplay)),
     h('span', { className: 'rgx-swiss-hit' },
-      h('span', { className: 'rgx-swiss-label' }, 'hit'),
+      h('span', { className: 'rgx-swiss-label' }, t('hit')),
       h('span', { className: 'rgx-swiss-value' }, vm.hitDisplay))) : null;
 
   return h('span', { className: 'rgx-swiss' },

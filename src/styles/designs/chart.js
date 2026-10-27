@@ -13,15 +13,15 @@ export const CHART_CSS = String.raw`
   --chart-muted: #615e55;
   --chart-grid: rgba(72, 68, 58, .14);
   --chart-grid-strong: rgba(72, 68, 58, .3);
-  --chart-trace: #9c3324;
+  --chart-trace: #23395b;
   --chart-red: #b23a2a;
   --chart-w: 170px;
   --chart-h: 56px;
   --chart-margin: 52px;
   --chart-head: 16px;
   --chart-value: 16px;
-  --chart-unit: 6.5px;
-  --chart-tag: 6.5px;
+  --chart-unit: 7.5px;
+  --chart-tag: 7.5px;
   --chart-num: 9px;
   --chart-press: 24px;
   height: auto;
@@ -42,7 +42,7 @@ export const CHART_CSS = String.raw`
   --chart-muted: #97a09a;
   --chart-grid: rgba(206, 220, 214, .13);
   --chart-grid-strong: rgba(206, 220, 214, .26);
-  --chart-trace: #e37f69;
+  --chart-trace: #9db4d6;
   --chart-red: #f07a62;
 }
 
@@ -52,8 +52,8 @@ export const CHART_CSS = String.raw`
   --chart-margin: 52px;
   --chart-head: 16px;
   --chart-value: 16px;
-  --chart-unit: 6.5px;
-  --chart-tag: 6.5px;
+  --chart-unit: 7.5px;
+  --chart-tag: 7.5px;
   --chart-num: 9px;
   --chart-press: 24px;
 }
@@ -64,8 +64,8 @@ export const CHART_CSS = String.raw`
   --chart-margin: 48px;
   --chart-head: 13px;
   --chart-value: 14px;
-  --chart-unit: 6px;
-  --chart-tag: 6px;
+  --chart-unit: 7.5px;
+  --chart-tag: 7.5px;
   --chart-num: 8.5px;
   --chart-press: 20px;
 }
@@ -76,8 +76,8 @@ export const CHART_CSS = String.raw`
   --chart-margin: 44px;
   --chart-head: 12px;
   --chart-value: 12.5px;
-  --chart-unit: 5.5px;
-  --chart-tag: 6px;
+  --chart-unit: 7.5px;
+  --chart-tag: 7.5px;
   --chart-num: 8px;
   --chart-press: 16px;
 }
@@ -160,7 +160,7 @@ export const CHART_CSS = String.raw`
   font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
   font-size: var(--chart-unit);
   font-weight: 500;
-  letter-spacing: .04em;
+  letter-spacing: 0;
   color: var(--chart-muted);
 }
 
@@ -177,10 +177,9 @@ export const CHART_CSS = String.raw`
 
 .rg-gauge[data-style="chart"] .rgx-chart-span {
   flex: 0 0 auto;
-  font-family: Bahnschrift, "DIN Alternate", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
-  font-size: 5.5px;
-  letter-spacing: .04em;
-  color: var(--chart-muted);
+  width: 8px;
+  height: 1px;
+  background: var(--chart-muted);
 }
 
 .rg-gauge[data-style="chart"] .rgx-chart-plot {
@@ -202,6 +201,13 @@ export const CHART_CSS = String.raw`
   width: 100%;
   height: 100%;
   display: block;
+}
+
+.rg-gauge[data-style="chart"] .rgx-chart-full {
+  stroke: var(--chart-red);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+  vector-effect: non-scaling-stroke;
 }
 
 .rg-gauge[data-style="chart"] .rgx-chart-line {
@@ -258,7 +264,7 @@ export const CHART_CSS = String.raw`
 .rg-gauge[data-style="chart"] .rgx-chart-tag {
   font-size: var(--chart-tag);
   font-weight: 500;
-  letter-spacing: .06em;
+  letter-spacing: 0;
   color: var(--chart-muted);
 }
 

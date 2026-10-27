@@ -19,8 +19,8 @@ export const SWISS_CSS = String.raw`
   padding: 0;
   border-radius: 0;
   color: var(--swiss-ink);
-  font-family: Arial, "Helvetica Neue", "Segoe UI", sans-serif;
-  font-variant-numeric: tabular-nums;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 [data-ds-dark-theme] .rg-gauge[data-style="swiss"] {
@@ -48,19 +48,19 @@ export const SWISS_CSS = String.raw`
 .rg-gauge[data-style="swiss"][data-variant="dock"][data-density="full"] {
   --swiss-w: 132px;
   --swiss-value: 20px;
-  --swiss-unit: 7px;
+  --swiss-unit: 7.5px;
   --swiss-num: 8.5px;
   --swiss-rule: 36px;
-  --swiss-label: 7px;
+  --swiss-label: 7.5px;
 }
 
 .rg-gauge[data-style="swiss"][data-variant="dock"][data-density="compact"] {
   --swiss-w: 124px;
   --swiss-value: 18px;
-  --swiss-unit: 6.5px;
+  --swiss-unit: 7.5px;
   --swiss-num: 8px;
   --swiss-rule: 32px;
-  --swiss-label: 7px;
+  --swiss-label: 7.5px;
 }
 
 .rg-gauge[data-style="swiss"] .rgx-swiss {
@@ -130,7 +130,7 @@ export const SWISS_CSS = String.raw`
   height: 1px;
   margin-top: 2px;
   flex: 0 0 auto;
-  background: color-mix(in srgb, var(--swiss-ink) 34%, transparent);
+  background: var(--swiss-ink);
 }
 
 .rg-gauge[data-style="swiss"] .rgx-swiss-tick {
@@ -139,7 +139,7 @@ export const SWISS_CSS = String.raw`
   width: 1px;
   height: 5px;
   background: var(--swiss-ink);
-  opacity: .48;
+  opacity: .7;
 }
 
 .rg-gauge[data-style="swiss"] .rgx-swiss-tick.is-start {
@@ -158,10 +158,11 @@ export const SWISS_CSS = String.raw`
 .rg-gauge[data-style="swiss"] .rgx-swiss-rate-cursor {
   position: absolute;
   top: -3px;
+  left: 0;
   width: 6px;
   height: 6px;
   background: var(--swiss-ink);
-  transition: left .12s linear;
+  transition: transform .12s linear;
 }
 
 .rg-gauge[data-style="swiss"][data-over="1"] .rgx-swiss-rate-cursor {
@@ -190,7 +191,7 @@ export const SWISS_CSS = String.raw`
   flex: 0 0 auto;
   font-size: var(--swiss-label);
   font-weight: 500;
-  letter-spacing: .02em;
+  letter-spacing: 0;
   color: var(--swiss-muted);
 }
 
@@ -208,16 +209,21 @@ export const SWISS_CSS = String.raw`
   width: var(--swiss-rule);
   height: 1px;
   flex: 0 0 auto;
-  background: color-mix(in srgb, var(--swiss-ink) 24%, transparent);
+  background: var(--swiss-ink);
+}
+
+.rg-gauge[data-style="swiss"] .rgx-swiss-mini-rule.is-unknown {
+  background: repeating-linear-gradient(90deg, var(--swiss-ink) 0 2px, transparent 2px 4px);
 }
 
 .rg-gauge[data-style="swiss"] .rgx-swiss-mini-cursor {
   position: absolute;
   top: -2px;
+  left: 0;
   width: 4px;
   height: 4px;
   background: var(--swiss-ink);
-  transition: left .12s linear;
+  transition: transform .12s linear;
 }
 
 .rg-gauge[data-style="swiss"] .rgx-swiss-mini-mark {
@@ -226,7 +232,7 @@ export const SWISS_CSS = String.raw`
   width: 1px;
   height: 5px;
   background: var(--swiss-ink);
-  opacity: .32;
+  opacity: .7;
 }
 
 .rg-gauge[data-style="swiss"] .rgx-swiss-alert {
@@ -251,7 +257,7 @@ export const SWISS_CSS = String.raw`
 
 .rg-gauge[data-style="swiss"] .rgx-mini {
   color: var(--swiss-ink);
-  font-family: Arial, "Helvetica Neue", "Segoe UI", sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 10.5px;
 }
 
@@ -273,5 +279,12 @@ export const SWISS_CSS = String.raw`
 
 .rg-gauge[data-style="swiss"] .rgx-mini-ctx.is-warn {
   color: var(--swiss-red);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rg-gauge[data-style="swiss"] .rgx-swiss-rate-cursor,
+  .rg-gauge[data-style="swiss"] .rgx-swiss-mini-cursor {
+    transition: none;
+  }
 }
 `;

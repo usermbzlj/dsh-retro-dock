@@ -1,6 +1,6 @@
 # DSH Retro Dock
 
-A composer instrument for DeepSeek Harness: live tokens per second, context pressure and session cache hit. It keeps the classic dual dial and offers seven selectable measuring languages: Bench, Broadcast VU, Altimeter, Signal, Chart, Swiss and Compass. Pick one under **Settings → Retro Dock → Style**; the classic dual dial remains the default. 1.5.0 adds a last-turn readout (first-token latency, average speed, output size) and a measurement-log export.
+A composer instrument for DeepSeek Harness: live tokens per second, context pressure and session cache hit. The default is the classic dual dial; Broadcast VU, Chart and Swiss are the other three looks. Pick one under **Settings → Retro Dock → Style**. Classic and VU can also switch the speed to a rolling drum and show three CTX lamps.
 
 ![Seven measuring languages](docs/seven-languages-hero.jpg)
 
@@ -10,27 +10,22 @@ A composer instrument for DeepSeek Harness: live tokens per second, context pres
 
 > [Seven instruments · design study](docs/seven-designs.md) · [Settings · dark](docs/settings-dark-en.jpg) · [Settings · light](docs/settings-light-en.jpg) · [Measurement contract](MEASUREMENT.md) · [Changelog](CHANGELOG.md) · [中文](README.md)
 
-## Seven measuring languages
+## Four looks
 
 | Style | Mechanism | Best for |
 | --- | --- | --- |
-| **Bench** | 240° scale, knife needle, recessed CTX bar | Precision and quiet; works in light and dark |
-| **Broadcast VU** | 130° fan, wedge needle, printed red zone | Long sessions; warm and physical |
-| **Altimeter** | 270° needle, three-digit drum window | Digits first |
-| **Signal** | Semaphore arm, three state lamps, counter | Seeing the warning state before the number |
-| **Chart** | Twenty-second paper trace, pen dot, pressure bar | Watching the trend during long generations |
-| **Swiss** | Number, hairline rule, square cursor | The quietest option: no machine, just a reading |
-| **Compass** | Rotating card, brass bezel, fixed lubber line | An object that moves without asking for attention |
+| **Classic** | 240° dual dial, tapered needle | Default; a combined reading |
+| **Broadcast VU** | Wide fan, wedge needle, over-range red zone | Long sessions |
+| **Chart** | Twenty-second paper trace | Watching the trend |
+| **Swiss** | Number, hairline rule, square cursor | The quietest option |
 
-The classic dual dial is the eighth option and the default. All eight share one `vm`, one calibration path and one set of state flags (live / warn / over / stale / DOM); a style changes the mechanism, not the measurement. Each was checked at the real 56px composer slot and 42px stats bar, with full / compact / minimal densities.
-
-The settings picker shows eight real 42px previews; the preview follows position, density, full scale, warning threshold and the sub-readout switch. Inside the host's 800px settings panel the page is a single-column form with a two-up preview; wide hosts keep the side preview. `npm run catalogue` generates the interactive catalogue at `docs/catalogue.html`; the written study is [docs/seven-designs.md](docs/seven-designs.md).
+All four share one `vm` and one calibration path. Classic and VU can show a drum counter and CTX lamps. The settings picker shows four real 42px previews. `npm run catalogue` builds the specimen book.
 
 ## Appearance
 
 - **Classic main dial**: 240° scale, four ticks with a heavier end tick, tapered needle. Default full scale 180 tok/s, configurable to 120 / 240 / 300. Past full scale the needle rests at the stop, the ring turns cyan and the number keeps rising; the tooltip names the full scale.
 - **Classic sub dial**: a 38px dual ring at full composer density. CTX is neutral below the threshold, with a redline printed at the threshold; past it the overrun arc, the number and `!` turn caution. HIT stays cyan so it never reads as a warning.
-- **Seven styles**: Bench, VU, Altimeter, Signal, Chart, Swiss, Compass. Each has its own mechanism, surface, type and motion; red is reserved for limits. See the [design study](docs/seven-designs.md).
+- **Four looks**: Classic, Broadcast VU, Chart, Swiss. Red is reserved for limits. See the [design study](docs/seven-designs.md).
 - **Placement**: click the instrument to move it between above-composer and the stats bar; hover/focus draws a quiet outline; the choice persists.
 - **Density**: composer full / compact / minimal at 860 / 620; stats bar full / minimal at 560. Minimal folds the instrument into one line; a CTX warning keeps its colour and `!`.
 - **Theme**: follows the host. Bench, Altimeter, Signal and Chart own dark surfaces in the dark theme; the VU stays a warm lit face; Swiss borrows the host's ink and paper completely; Compass only lets its readout follow the host — the card remains its own object.
@@ -41,7 +36,7 @@ The settings picker shows eight real 42px previews; the preview follows position
 
 - **Rate**: live tok/s with `≈`. 1.2s sliding window, incremental stream counting, calibration against host `sessionStats` with a 0.4–2.5 multiplier. The `≈` has a fixed slot so live/idle never shifts the centred instrument.
 - **CTX / HIT**: current context pressure and whole-session cache hit. HIT keeps the host's precision and never rounds a partial hit to 100%.
-- **Styles**: eight options (classic plus seven measuring languages); 42px real previews in settings; switching applies immediately.
+- **Styles**: four options; 42px real previews in settings; switching applies immediately. Classic and VU can use a drum readout and CTX lamps.
 - **Settings**: style, placement, density, full scale, CTX warning, sub-readout switch, language, calibration reset. Full-page controls; the preview uses the current scale, warning line and placement, and labels example readings as examples.
 - **Last turn**: first-token latency (when the host exposes a running flag), average speed with tool waits removed, and output tokens; shown in the tooltip and on the settings page.
 - **Measurement log**: "Export measurement log" in settings downloads a JSON of timestamps, token counts, host stats and calibration samples — no conversation text — for offline calibration review.
@@ -74,7 +69,7 @@ After installing, check that `~/.dsh/profiles/<profile>/package.json` has `@loca
 npm pack   # local-retro-dock-1.5.0.tgz
 ```
 
-> The 1.1.0 four-style release remains available from the tag / Release. `main` is 1.5.0: classic plus seven measuring languages.
+> The 1.1.0 four-style release remains available from the tag / Release. `main` is 1.6.0: classic, VU, Chart and Swiss.
 
 ## Interaction
 
@@ -108,7 +103,7 @@ All seven languages read the same data. The Chart trace only records samples aft
 ```bash
 npm install
 npm run build      # src/ -> client.js
-npm test           # 67 tests
+npm test           # 68 tests
 npm run preview    # docs/gallery.html (classic specimens + settings)
 npm run catalogue  # docs/catalogue.html (seven-language catalogue)
 npm run shots      # needs Chromium: npx playwright install chromium

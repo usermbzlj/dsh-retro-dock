@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.6.0 — 2026-10-26
+
+### Changed
+
+- **Four looks, not eight.** The picker keeps 经典, 广播 VU, 记录纸 and 瑞士尺. 台表 folded into classic (same 150°/240° geometry). 高度表's drum and 信号楼's CTX lamps become shared options (`readout` / `ctxLamps`) on classic and VU. 罗经 is retired: a rotating card carried no readable rate.
+- Old prefs migrate: `altimeter` → classic + drum readout; `signal` → classic + lamps; `bench` / `compass` → classic.
+- Settings copy in plain language. Style cards stay two columns down to 400px; last turn is a three-column table; export is a bordered button.
+
+### Fixed
+
+- Stale badge is a dashed `停`, not the same `!` as a CTX warning. Source badges are `估` / `混`.
+- VU red zone is the over-range end of the speed scale, not the CTX threshold. VU gets its own slightly underdamped spring; the needle no longer bounces at the stop.
+- Chart pen is blue-black ink; red is only the full-scale line and over mark. Sampling drops to 1 Hz under reduced motion.
+- Swiss hairlines use solid ink; the cursor animates with `transform`.
+- Unknown CTX is a dashed track, never drawn as 0. Stale no longer fades the reading. Minimum label size is 7.5px at 42px.
+
 ## 1.5.0 — 2026-10-26
 
 ### Added

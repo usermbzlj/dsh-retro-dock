@@ -9,6 +9,7 @@
 
 import { R } from '../runtime.js';
 import { dialPosition, formatHitPercent } from '../measure.js';
+import { Drum, Lamps } from './designs/kit.js';
 
 const h = (...args) => R.h(...args);
 
@@ -70,6 +71,10 @@ const qualityFor = (vm) => {
   return null;
 };
 
+const qualityLabelKey = (quality) => (
+  quality === 'stale' ? 'qualityLabelStale' : quality === 'mixed' ? 'qualityLabelMixed' : 'qualityLabelDom'
+);
+
 /**
  * @param {{
  *   vm: object,
@@ -81,21 +86,22 @@ const qualityFor = (vm) => {
 export const ClassicGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
   const scale = Number(vm.scale) || 180;
   const warnAt = clampPct(vm.warnAt ?? 80);
-  const ctxValue = clampPct(vm.ctxValue || 0);
+  const ctxKnown = vm.ctxKnown !== false;
+  const ctxValue = ctxKnown ? clampPct(vm.ctxValue || 0) : 0;
   const hitValue = clampPct(vm.hitValue || 0);
   const action = vm.placement === 'input' ? t('switchToDock') : t('switchToInput');
   const sourceText = sourceTextFor(vm, t);
   const quality = qualityFor(vm);
-  const qualityLabel = quality === 'stale' ? '!' : quality === 'mixed' ? 'MIX' : 'DOM';
   const qualityTitle = quality === 'stale'
     ? t('sourceUnavailable')
     : quality === 'mixed'
       ? t('qualityMixed')
       : t('qualityDom');
+  const over = (Number(vm.over) || 0) > 0;
 
   const ctxDash = `${ctxValue * 0.712} 107`;
   const hitDash = `${hitValue * 0.482} 72.3`;
-  const warnArc = arcPath(warnAt, ctxValue);
+  const warnArc = ctxKnown ? arcPath(warnAt, ctxValue) : null;
 
   const redline = (() => {
     if (vm.sub === false) return null;
@@ -111,23 +117,24 @@ export const ClassicGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
   })();
 
   const titleParts = [];
+  if (!vm.static) titleParts.push(action);
   if (vm.stale) titleParts.push(t('sourceUnavailable'));
-  titleParts.push(`${t('tipRate', { tps: vm.displayTps })} · ${t('tipCtx', { ctx: vm.ctxDisplay })} · ${t('tipHit', { hit: vm.hitDisplay })}`);
+  titleParts.push(`${t('tipRate', { tps: vm.displayTps })} ${t('tipCtx', { ctx: vm.ctxDisplay })} ${t('tipHit', { hit: vm.hitDisplay })}`);
   if (vm.turnText) titleParts.push(vm.turnText);
   const metaParts = [t('scaleTooltip', { n: scale }), t('warnAtTooltip', { n: warnAt })];
   if (vm.calibrationText) metaParts.push(vm.calibrationText);
-  titleParts.push(metaParts.join(' · '));
+  titleParts.push(metaParts.join(' '));
   titleParts.push(`${t('source')} ${sourceText}`);
-  if (!vm.static) titleParts.push(action);
   const title = titleParts.join('\n');
 
   const ariaParts = [
     t(vm.static ? 'ariaGaugeStatic' : 'ariaGaugeClassic', {
       tps: vm.displayTps,
-      ctx: vm.ctxDisplay,
+      ctx: ctxKnown ? vm.ctxDisplay : t('ctxUnknownAria'),
       hit: vm.hitDisplay,
     }),
   ];
+  if (!ctxKnown) ariaParts.push(t('ctxUnknownAria'));
   if (vm.warn) ariaParts.push(t('warnAria'));
   if (vm.stale) ariaParts.push(t('sourceUnavailable'));
   ariaParts.push(`${t('source')} ${sourceText}`);
@@ -147,7 +154,9 @@ export const ClassicGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
     className: 'rg-gauge',
     'data-live': vm.live ? '1' : '0',
     'data-warn': vm.warn ? '1' : '0',
+    'data-over': over ? '1' : '0',
     'data-stale': vm.stale ? '1' : '0',
+    'data-ctx': ctxKnown ? '1' : '0',
     'data-quality': quality || undefined,
     'data-source': vm.source || 'projection',
     'data-variant': vm.placement,
@@ -187,19 +196,22 @@ export const ClassicGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
     h('span', { className: 'rg-read' },
       h('span', { className: 'rg-value' },
         h('span', { className: 'rg-approx', 'aria-hidden': 'true' }, vm.live ? '≈' : '\u00A0'),
-        h('span', { className: 'rg-digits' }, vm.displayTps)),
+        vm.readout === 'drum'
+          ? h(Drum, { value: vm.displayTps })
+          : h('span', { className: 'rg-digits' }, vm.displayTps),
+        over ? h('span', { className: 'rg-over-mark', 'aria-hidden': 'true' }, '+') : null),
       h('span', { className: 'rg-unit' }, t('unit')))),
   h('span', { className: 'rg-module rg-module-minor', hidden: !showSub },
     h('svg', { className: 'rg-dial rg-dial-minor', viewBox: '0 0 40 40', 'aria-hidden': 'true' },
       h('circle', {
-        className: 'rg-track', cx: 20, cy: 20, r: 17,
-        strokeDasharray: SUB_TRACK, transform: 'rotate(150 20 20)',
+        className: ctxKnown ? 'rg-track' : 'rg-track is-unknown', cx: 20, cy: 20, r: 17,
+        strokeDasharray: ctxKnown ? SUB_TRACK : '1.6 2.2', transform: 'rotate(150 20 20)',
       }),
-      h('circle', {
+      ctxKnown ? h('circle', {
         className: 'rg-arc rg-arc-ctx', cx: 20, cy: 20, r: 17,
         strokeDasharray: ctxDash, transform: 'rotate(150 20 20)',
         style: { opacity: ctxValue > 0 ? 1 : 0 },
-      }),
+      }) : null,
       warnArc ? h('path', {
         className: 'rg-arc rg-arc-ctx-warn',
         d: warnArc,
@@ -220,6 +232,7 @@ export const ClassicGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
         h('span', { className: 'rg-tag' },
           t('ctx'),
           vm.warn ? h('span', { className: 'rg-alert', 'aria-hidden': 'true' }, '!') : null),
+        vm.ctxLamps ? h(Lamps, { vm }) : null,
         h('span', { className: 'rg-num' }, vm.ctxText)),
       h('span', { className: 'rg-row' },
         h('span', { className: 'rg-tag' }, t('hit')),
@@ -227,14 +240,15 @@ export const ClassicGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
   h('span', { className: 'rg-meta', hidden: !showSub },
     h('b', { className: 'rg-meta-ctx' },
       vm.warn ? h('span', { className: 'rg-alert', 'aria-hidden': 'true' }, '!') : null,
-      `${t('ctx')} ${vm.ctxDisplay}`),
-    h('span', null, '·'),
+      t('ctx'),
+      vm.ctxLamps ? h(Lamps, { vm }) : null,
+      ` ${vm.ctxDisplay}`),
     h('b', null, `${t('hit')} ${vm.hitDisplay}`)),
   quality ? h('span', {
     className: 'rg-quality',
     'data-quality': quality,
     title: qualityTitle,
-  }, qualityLabel) : null,
+  }, t(qualityLabelKey(quality))) : null,
   interactive ? h('span', {
     className: 'rg-affordance',
     'aria-hidden': 'true',
@@ -266,7 +280,10 @@ export const createClassicVm = ({
   sub = true,
   stale = false,
   source = 'projection',
+  readout = 'digits',
+  ctxLamps = false,
 } = {}) => {
+  const numericCtx = ctx === null || ctx === undefined || !Number.isFinite(Number(ctx)) ? null : Number(ctx);
   const hitText = formatHitPercent(hit);
   const position = dialPosition(tps, scale);
   return {
@@ -274,16 +291,19 @@ export const createClassicVm = ({
     density,
     live: tps > 2,
     displayTps: String(Math.round(tps)),
-    ctxValue: ctx,
-    ctxText: String(Math.round(ctx)),
-    ctxDisplay: `${Math.round(ctx)}%`,
+    ctxValue: numericCtx ?? 0,
+    ctxKnown: numericCtx !== null,
+    ctxText: numericCtx === null ? '—' : String(Math.round(numericCtx)),
+    ctxDisplay: numericCtx === null ? '—' : `${Math.round(numericCtx)}%`,
     hitValue: hit,
     hitDisplay: `${hitText}%`,
-    warn: ctx >= warnAt,
+    warn: numericCtx !== null && numericCtx >= warnAt,
     warnAt,
     stale,
     sub,
     source,
+    readout,
+    ctxLamps,
     calibrationText: '×1.12',
     scale,
     position: position.position,
@@ -310,8 +330,10 @@ export const ClassicPreview = ({
   warnAt = 80,
   sub = true,
   ctx = 65,
+  readout = 'digits',
+  ctxLamps = false,
   t,
 }) => h(ClassicGauge, {
-  vm: createClassicVm({ placement, density, scale, warnAt, sub, ctx }),
+  vm: createClassicVm({ placement, density, scale, warnAt, sub, ctx, readout, ctxLamps }),
   t,
 });

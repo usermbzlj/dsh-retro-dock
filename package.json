@@ -1,9 +1,9 @@
 {
   "name": "@local/retro-dock",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": true,
   "type": "module",
-  "description": "Theme-aware classic dual-dial instrument for DeepSeek Harness, plus seven selectable measuring languages: live tokens/sec, context pressure and cache hit with calibrated measurement.",
+  "description": "Theme-aware classic dual-dial instrument for DeepSeek Harness, plus VU, chart and Swiss looks: live tokens/sec, context pressure and cache hit with calibrated measurement.",
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node --test",

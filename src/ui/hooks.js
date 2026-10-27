@@ -154,8 +154,9 @@ export const useMeterLoop = ({ active, rootRef, scale, style, onReadout }) => {
         velocity = 0;
         over = overTarget;
       } else {
-        const damping = 0.7 - over * 0.55;
-        velocity += ((target - needle) * 0.085 - velocity * damping) * dt;
+        const stiff = style === 'vu' ? 0.12 : 0.085;
+        const damping = style === 'vu' ? 0.38 : 0.7 - over * 0.55;
+        velocity += ((target - needle) * stiff - velocity * damping) * dt;
         needle += velocity * dt;
         if (needle < 0) {
           needle = 0;
@@ -163,7 +164,7 @@ export const useMeterLoop = ({ active, rootRef, scale, style, onReadout }) => {
         }
         if (needle > 100) {
           needle = 100;
-          velocity = -Math.abs(velocity) * 0.55;
+          velocity = 0;
         }
         over += (overTarget - over) * (1 - Math.pow(0.86, dt));
       }

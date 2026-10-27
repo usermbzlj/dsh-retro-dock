@@ -165,7 +165,7 @@ entries and never leaves the page unless exported.
 
 ## Verification
 
-- `npm test` — 67 tests:
+- `npm test` — 68 tests:
   - measurement pure functions and host-compatible HIT formatting;
   - incremental stream counting, rewind/reset behaviour;
   - 1.2 s window, calibration deltas, bounds, generation/session resets;

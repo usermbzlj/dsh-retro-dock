@@ -24,7 +24,7 @@ import { dialPosition, formatHitPercent } from '../measure.js';
  * }} [options]
  */
 export const createVm = ({
-  style = 'bench',
+  style = 'vu',
   placement = 'input',
   density = 'full',
   tps = 142,
@@ -37,6 +37,8 @@ export const createVm = ({
   source = 'projection',
   live,
   calibrationText = '×1.12',
+  readout = 'digits',
+  ctxLamps = false,
 } = {}) => {
   const numericCtx = ctx === null || ctx === undefined || !Number.isFinite(Number(ctx)) ? null : Number(ctx);
   const numericHit = hit === null || hit === undefined || !Number.isFinite(Number(hit)) ? null : Number(hit);
@@ -66,6 +68,8 @@ export const createVm = ({
     warn: numericCtx !== null && numericCtx >= warnAt,
     position: position.position,
     over: position.over,
+    readout,
+    ctxLamps,
     calibrationText,
     static: true,
   };

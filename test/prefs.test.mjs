@@ -67,9 +67,23 @@ test('the retired 1.1.0 style value falls back to classic', () => {
 
 test('the selected instrument language persists', () => {
   const storage = new MemoryStorage();
-  createPrefs({ storage }).set({ style: 'signal' });
-  assert.ok(STYLES.includes('signal'));
-  assert.equal(createPrefs({ storage }).getSnapshot().style, 'signal');
+  createPrefs({ storage }).set({ style: 'vu' });
+  assert.ok(STYLES.includes('vu'));
+  assert.equal(createPrefs({ storage }).getSnapshot().style, 'vu');
+});
+
+test('retired styles migrate onto classic with their leftover option', () => {
+  const altimeter = new MemoryStorage();
+  altimeter.setItem(PREFS_KEY, JSON.stringify({ style: 'altimeter' }));
+  const a = createPrefs({ storage: altimeter }).getSnapshot();
+  assert.equal(a.style, 'classic');
+  assert.equal(a.readout, 'drum');
+
+  const signal = new MemoryStorage();
+  signal.setItem(PREFS_KEY, JSON.stringify({ style: 'signal' }));
+  const s = createPrefs({ storage: signal }).getSnapshot();
+  assert.equal(s.style, 'classic');
+  assert.equal(s.ctxLamps, true);
 });
 
 test('unknown or out-of-range values fall back safely', () => {

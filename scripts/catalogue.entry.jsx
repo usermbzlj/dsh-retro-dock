@@ -1,6 +1,6 @@
 /**
- * The seven-instrument catalogue. This page is a specimen book: a real-size
- * rack, one spread per design, a 2× craft detail, and a compact comparison.
+ * The instrument catalogue: classic as the reference, then one spread per
+ * design, a 2× craft detail, and a compact comparison.
  */
 
 import React from 'react';
@@ -10,10 +10,11 @@ import { bindReact } from '../src/runtime.js';
 import { CSS } from '../src/styles/index.js';
 import { DESIGN_CSS } from '../src/styles/designs/index.js';
 import { createT } from '../src/i18n.js';
+import { ClassicGauge, createClassicVm } from '../src/ui/classic.js';
 import { DesignGauge } from '../src/ui/design-gauge.js';
 import { createVm } from '../src/ui/vm.js';
 import { DESIGN_IDS, DESIGN_META } from '../src/designs/meta.js';
-import { CATALOGUE, RECOMMENDATIONS } from './catalogue.data.js';
+import { CATALOGUE, CLASSIC, RECOMMENDATIONS } from './catalogue.data.js';
 
 bindReact(React, null);
 
@@ -131,11 +132,13 @@ h1 {
 }
 .rack-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   padding: 18px 20px 15px;
 }
 .rack-cell { min-width: 0; text-align: center; }
+.rack-cell.is-reference { border-right: 1px solid var(--hair); }
+.rack.is-dark .rack-cell.is-reference { border-color: rgba(255, 255, 255, .12); }
 .rack-stage {
   height: 52px;
   display: flex;
@@ -400,7 +403,6 @@ h1 {
 .footer a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 
 @media (max-width: 1120px) {
-  .rack-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .spread, .spread.is-flipped { grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; }
   .spread.is-flipped { grid-template-columns: 320px minmax(0, 1fr); }
   .spread.is-flipped .spread-text { order: 0; }
@@ -415,7 +417,8 @@ h1 {
   .cat { width: calc(100% - 32px); padding-top: 18px; }
   h1 { font-size: 44px; }
   .spread, .spread.is-flipped { grid-template-columns: 1fr; gap: 22px; }
-  .rack-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .rack-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rack-cell.is-reference { border-right: 0; }
   .pair { grid-template-columns: 1fr; }
   .states { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .state { border-left: 1px solid var(--hair); border-top: 1px solid var(--hair); }
@@ -428,7 +431,6 @@ h1 {
 }
 @media (max-width: 560px) {
   h1 { font-size: 36px; }
-  .rack-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .states { grid-template-columns: minmax(0, 1fr); }
   .state { border-left: 0; border-top: 1px solid var(--hair); }
   .state:first-child { border-top: 0; }
@@ -444,7 +446,11 @@ const sheet = document.createElement('style');
 sheet.textContent = `${CSS}\n${DESIGN_CSS}\n${PAGE_CSS}`;
 document.head.append(sheet);
 document.documentElement.lang = 'zh-CN';
-document.title = 'Retro Dock · 七种测量语言';
+document.title = 'Retro Dock 三种测量语言';
+
+const Classic = ({ density = 'full', tps = 142, ctx = 65 }) => (
+  <ClassicGauge vm={createClassicVm({ placement: 'dock', density, tps, ctx })} t={t} />
+);
 
 const Gauge = ({ style, placement = 'dock', density = 'full', tps = 142, ctx = 65, source = 'projection', stale = false }) => (
   <DesignGauge
@@ -472,13 +478,18 @@ const RackBlock = ({ dark }) => (
     </div>
     <div className={dark ? 'rack is-dark' : 'rack'} data-ds-dark-theme={dark ? '' : undefined}>
       <div className="rack-grid">
+        <div className="rack-cell is-reference">
+          <div className="rack-stage"><Classic /></div>
+          <div className="rack-name">{CLASSIC.name.zh}</div>
+          <div className="rack-lineage">{CLASSIC.lineage.zh}</div>
+        </div>
         {DESIGN_IDS.map((id) => {
           const meta = DESIGN_META[id];
           return (
             <div className="rack-cell" key={id}>
               <div className="rack-stage"><Gauge style={id} placement="dock" /></div>
               <div className="rack-name">{meta.name.zh}</div>
-              <div className="rack-lineage">{meta.name.en} / {meta.lineage.zh}</div>
+              <div className="rack-lineage">{meta.lineage.zh}</div>
             </div>
           );
         })}
@@ -510,9 +521,9 @@ const STATES = [
   { key: 'idle', label: '空闲', tps: 0, ctx: 32 },
   { key: 'live', label: '实时 142', tps: 142, ctx: 65 },
   { key: 'over', label: '过速 252', tps: 252, ctx: 65 },
-  { key: 'warn', label: 'CTX 85', tps: 96, ctx: 85 },
-  { key: 'dom', label: '页面文本', tps: 142, ctx: 65, source: 'dom' },
-  { key: 'stale', label: '数据不可用', tps: 142, ctx: 65, stale: true },
+  { key: 'warn', label: '上下文 85%', tps: 96, ctx: 85 },
+  { key: 'dom', label: '页面文本估算', tps: 142, ctx: 65, source: 'dom' },
+  { key: 'stale', label: '数据停止更新', tps: 142, ctx: 65, stale: true },
 ];
 
 const StateRow = ({ style }) => (
@@ -604,6 +615,10 @@ const Spread = ({ style, index }) => {
 const MinimalList = ({ dark }) => (
   <div className={dark ? 'minimal-col is-dark' : 'minimal-col'} data-ds-dark-theme={dark ? '' : undefined}>
     <div className="minimal-head">{dark ? '深色宿主 / minimal' : '浅色宿主 / minimal'}</div>
+    <div className="minimal-row">
+      <span className="minimal-name">{CLASSIC.name.zh}</span>
+      <Classic density="minimal" />
+    </div>
     {DESIGN_IDS.map((id) => (
       <div className="minimal-row" key={id}>
         <span className="minimal-name">{DESIGN_META[id].name.zh}</span>
@@ -614,10 +629,10 @@ const MinimalList = ({ dark }) => (
 );
 
 const PRINCIPLES = [
-  ['一个活动件', '速度只交给一个部件：针、臂板、游标、纸笔或卡。其余部件不动。'],
-  ['红色只给界限', '警戒、越线与过速共用一种红；HIT 永远不红。红色不做品牌。'],
-  ['表面属于仪器', '有面板的设计自己负责对比度；瑞士尺完全借宿主的墨与纸，罗经只让读数跟随宿主。'],
-  ['真实 1× 优先', '56px 输入位、42px 统计条是尺度；2× 只用于检查刻线和字距。'],
+  ['一种阅读需求一种样式', '综合、温度、走势、安静，各对应一种样式。换材质不算新样式，所以台表、高度表、信号楼、罗经没有留下。'],
+  ['红色只给界限', '上下文警戒和超量程用红色；缓存命中永远不红。红色不做品牌装饰。'],
+  ['读数不跟着降级', '数据停止更新时显示中性的「停」角标，读数本身不变淡；上下文未知时画虚线，不画成 0。'],
+  ['真实尺寸优先', '56px 输入位和 42px 统计条是验收尺寸；42px 下文字不小于 7.5px。2× 只用于检查刻线。'],
 ];
 
 const App = () => (
@@ -628,14 +643,14 @@ const App = () => (
     </header>
 
     <div className="hero-title">
-      <h1>七种测量语言</h1>
-      <span className="sub">Seven instruments for one reading</span>
+      <h1>三种测量语言</h1>
+      <span className="sub">Three instruments beside the classic dial</span>
     </div>
     <p className="lede">
-      同一组读数：≈ tok/s、CTX、HIT，以及 live / warn / over / stale / DOM。七套仪表各自选择一种测量传统，
-      而不是给同一个表盘换七组颜色。红色只给界限；表面要么属于仪器，要么完全不存在。
+      同一组读数：速度、上下文占用、缓存命中，以及实时、警戒、超量程、停止更新、页面估算这几种状态。
+      经典双表盘是默认，也是参照；另外三种各自回答一种不同的阅读需求，而不是给同一个表盘换一种材质。
     </p>
-    <p className="study-note">七套组件共用同一个 vm 和同一组状态标记；五套把读数放进自己的面板或纸面，瑞士尺完全透明，罗经只把读数交给宿主。</p>
+    <p className="study-note">四种样式读同一份数据、同一套校准。VU 和记录纸有自己的面板或纸面，瑞士尺完全借宿主的墨与纸。</p>
 
     <RackBlock />
     <RackBlock dark />
@@ -654,7 +669,7 @@ const App = () => (
     <section className="closing">
       <h2>收束</h2>
       <p className="lede">
-        minimal 密度把仪表折成一行。七套仍然各自成立：面板、纸张、搪瓷和透明排版在最小尺寸下都没有变成同一种灰色。
+        minimal 密度把仪表折成一行，用留白分隔各项；超过满量程时数字后带「+」。四种样式在最小尺寸下仍然认得出来。
       </p>
       <div className="minimal-compare">
         <MinimalList />
@@ -665,20 +680,20 @@ const App = () => (
         {RECOMMENDATIONS.map((rec) => (
           <div className="rec" key={rec.id}>
             <div className="rec-role">{rec.role}</div>
-            <div className="rec-name">{DESIGN_META[rec.id].name.zh}</div>
+            <div className="rec-name">{rec.id === 'classic' ? CLASSIC.name.zh : DESIGN_META[rec.id].name.zh}</div>
             <p className="rec-text">{rec.text}</p>
           </div>
         ))}
       </div>
 
       <p className="closing-note">
-        七套都读同一组 vm 与状态标记；已接入 prefs:v3 与设置页样式选择器，默认仍是 classic，台表是设计上的首选。
-        真实会话 trace 与七套动效的实景观感是接下来的事。
+        1.6.0 从八种样式收为四种。台表并入经典；高度表的鼓轮成了经典和 VU 的「读数」选项；信号楼的三色灯成了「上下文信号灯」选项；
+        罗经下架，因为转动的卡面上没有可以读的数。旧设置会自动迁移。真实会话下的动效观感仍待验收。
       </p>
     </section>
 
     <footer className="footer">
-      <span>Retro Dock / 七种测量语言</span>
+      <span>Retro Dock 三种测量语言</span>
       <span>速度是 1.2 秒估算 + 校准，不是服务端逐 chunk 计数。</span>
       <span>2026.10 / 设计研究</span>
     </footer>

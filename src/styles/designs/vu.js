@@ -20,8 +20,8 @@ export const VU_CSS = String.raw`
   --vu-row: 17px;
   --vu-value: 17px;
   --vu-side: 9.5px;
-  --vu-tag: 6.5px;
-  --vu-unit: 6.5px;
+  --vu-tag: 7.5px;
+  --vu-unit: 7.5px;
   height: auto;
   gap: 0;
   padding: 0;
@@ -32,9 +32,9 @@ export const VU_CSS = String.raw`
 }
 
 [data-ds-dark-theme] .rg-gauge[data-style="vu"] {
-  --vu-face-1: #efe2c9;
-  --vu-face-2: #ddcaa8;
-  --vu-glow: rgba(255, 196, 120, .28);
+  --vu-face-1: #d6c6a6;
+  --vu-face-2: #c7b58e;
+  --vu-glow: transparent;
   --vu-bezel: #2b231b;
   --vu-inner: rgba(255, 250, 238, .38);
   --vu-ink: #2a2119;
@@ -50,8 +50,8 @@ export const VU_CSS = String.raw`
   --vu-row: 17px;
   --vu-value: 17px;
   --vu-side: 9.5px;
-  --vu-tag: 6.5px;
-  --vu-unit: 6.5px;
+  --vu-tag: 7.5px;
+  --vu-unit: 7.5px;
 }
 
 .rg-gauge[data-style="vu"][data-variant="input"][data-density="compact"] {
@@ -61,8 +61,8 @@ export const VU_CSS = String.raw`
   --vu-row: 15px;
   --vu-value: 15px;
   --vu-side: 9px;
-  --vu-tag: 6.2px;
-  --vu-unit: 6.2px;
+  --vu-tag: 7.5px;
+  --vu-unit: 7.5px;
 }
 
 .rg-gauge[data-style="vu"][data-variant="dock"][data-density="full"] {
@@ -72,8 +72,8 @@ export const VU_CSS = String.raw`
   --vu-row: 13px;
   --vu-value: 13px;
   --vu-side: 8px;
-  --vu-tag: 6px;
-  --vu-unit: 6px;
+  --vu-tag: 7.5px;
+  --vu-unit: 7.5px;
 }
 
 .rg-gauge[data-style="vu"][data-variant="dock"][data-density="compact"] {
@@ -83,8 +83,8 @@ export const VU_CSS = String.raw`
   --vu-row: 12px;
   --vu-value: 12px;
   --vu-side: 7.5px;
-  --vu-tag: 5.5px;
-  --vu-unit: 5.5px;
+  --vu-tag: 7.5px;
+  --vu-unit: 7.5px;
 }
 
 .rg-gauge[data-style="vu"] .rgx-vu {
@@ -150,7 +150,7 @@ export const VU_CSS = String.raw`
   fill: var(--vu-ink);
   opacity: .88;
   font-family: Constantia, Cambria, Georgia, "DejaVu Serif", serif;
-  font-size: 5.2px;
+  font-size: 11px;
   font-variant-numeric: lining-nums tabular-nums;
 }
 
@@ -174,12 +174,18 @@ export const VU_CSS = String.raw`
   fill: var(--vu-ink);
 }
 
+[data-ds-dark-theme] .rg-gauge[data-style="vu"][data-live="1"] {
+  --vu-face-1: #efe2c9;
+  --vu-face-2: #ddcaa8;
+  --vu-glow: rgba(255, 196, 120, .28);
+}
+
 .rg-gauge[data-style="vu"] .rgx-vu-peak {
   position: absolute;
   top: 4px;
   right: 7px;
-  width: 3px;
-  height: 3px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: var(--vu-peak);
 }
@@ -215,7 +221,7 @@ export const VU_CSS = String.raw`
 .rg-gauge[data-style="vu"] .rgx-vu-tag {
   font-size: var(--vu-tag);
   font-weight: 500;
-  letter-spacing: .08em;
+  letter-spacing: 0;
   color: var(--vu-muted);
   white-space: nowrap;
 }
@@ -265,6 +271,11 @@ export const VU_CSS = String.raw`
   opacity: .7;
 }
 
+.rg-gauge[data-style="vu"] .rgx-vu-over {
+  color: var(--vu-red);
+  font-weight: 700;
+}
+
 .rg-gauge[data-style="vu"] .rgx-vu-digits {
   display: inline-block;
   flex: 0 0 auto;
@@ -277,7 +288,7 @@ export const VU_CSS = String.raw`
   margin-left: 1px;
   font-size: var(--vu-unit);
   font-weight: 500;
-  letter-spacing: .05em;
+  letter-spacing: 0;
   color: var(--vu-muted);
 }
 

@@ -23,5 +23,5 @@ test('strings interpolate without throwing on missing values', () => {
   const en = createT('en');
   assert.equal(en('samples', { n: 2 }), '2 samples');
   assert.equal(en('sourceDom'), 'page text');
-  assert.equal(en('qualityDom'), 'Data comes from page text, not host stats');
+  assert.equal(en('qualityDom'), 'Estimated from page text, not DeepSeek usage stats');
 });

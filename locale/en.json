@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Retro Dock composer instrument",
-    "description": "Classic dual dial plus seven selectable measuring languages (Bench, VU, Altimeter, Signal, Chart, Swiss, Compass): live tokens per second, CTX warning, context pressure and session cache hit with visible data-source states."
+    "description": "Classic dual dial plus Broadcast VU, Chart and Swiss looks: live tokens per second, context pressure and session cache hit with visible data-source states."
   }
 }

@@ -1,4 +1,4 @@
-/** Build the standalone seven-instrument catalogue. */
+/** Build the standalone instrument catalogue (classic plus three designs). */
 
 import { build } from 'esbuild';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -33,7 +33,7 @@ await writeFile(path.join(docs, 'catalogue.html'), `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Retro Dock · 七种测量语言</title>
+<title>Retro Dock 三种测量语言</title>
 <style>html,body{margin:0}</style>
 </head>
 <body>

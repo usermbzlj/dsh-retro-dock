@@ -42,18 +42,31 @@ const useTrace = (vm) => {
 
   R.useEffect(() => {
     if (staticMode) return undefined;
+    const reduced = typeof window !== 'undefined'
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const onVisibility = () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+      setSamples([]);
+    };
     const timer = setInterval(() => {
       if (typeof document !== 'undefined' && document.hidden) return;
       setSamples((previous) => {
-        // Once the paper is flat, an idle tick changes nothing on screen;
-        // returning the same array lets React skip the render.
         if (latest.current === 0
           && previous.length === COUNT
           && previous.every((value) => value === 0)) return previous;
         return [...previous.slice(-(COUNT - 1)), latest.current];
       });
-    }, 250);
-    return () => clearInterval(timer);
+    }, reduced ? 1000 : 250);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', onVisibility);
+    }
+    return () => {
+      clearInterval(timer);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', onVisibility);
+      }
+    };
   }, [staticMode]);
 
   return staticMode ? synthesize(vm.tps, vm.scale) : samples;
@@ -68,7 +81,8 @@ const yFor = (value, scale) => {
 export const ChartBody = ({ vm, t }) => {
   const scale = Number(vm.scale) || 180;
   const warnAt = clampPct(vm.warnAt ?? 80);
-  const ctx = clampPct(vm.ctxValue || 0);
+  const ctxKnown = vm.ctxKnown !== false;
+  const ctx = ctxKnown ? clampPct(vm.ctxValue || 0) : 0;
   const showSub = vm.sub !== false;
   const trace = useTrace(vm);
   const data = trace.length ? trace : [Number(vm.tps) || 0];
@@ -91,7 +105,7 @@ export const ChartBody = ({ vm, t }) => {
           h('span', { className: 'rgx-chart-digits' }, vm.displayTps),
           h('span', { className: 'rgx-chart-unit' }, t('unit')),
           h('span', { className: 'rgx-chart-over', 'aria-hidden': 'true' }, '+')),
-        h('span', { className: 'rgx-chart-span' }, '20 s')),
+          h('span', { className: 'rgx-chart-span', 'aria-hidden': 'true' })),
       h('span', { className: 'rgx-chart-plot rgx-mechanism' },
         h('svg', {
           className: 'rgx-chart-trace',
@@ -99,18 +113,15 @@ export const ChartBody = ({ vm, t }) => {
           preserveAspectRatio: 'none',
           'aria-hidden': 'true',
         },
-        h('path', { className: 'rgx-chart-line', d: path, fill: 'none' }),
-        over ? h('line', {
-          className: 'rgx-chart-cap',
-          x1: 97,
-          x2: 100,
-          y1: 4,
-          y2: 4,
-        }) : null),
+        h('line', {
+          className: 'rgx-chart-full',
+          x1: 0, x2: 100, y1: 6, y2: 6,
+        }),
+        h('path', { className: 'rgx-chart-line', d: path, fill: 'none' })),
         h('span', {
           className: over ? 'rgx-chart-dot is-over' : 'rgx-chart-dot',
           style: {
-            left: `calc(${(last?.x ?? 100).toFixed(2)}% - 6px)`,
+            left: `calc(${(last?.x ?? 100).toFixed(2)}% - 2px)`,
             top: `${(last?.y ?? 96).toFixed(2)}%`,
             transform: 'translateY(-50%)',
           },
@@ -121,11 +132,11 @@ export const ChartBody = ({ vm, t }) => {
           t('ctx'),
           vm.warn ? h('b', { className: 'rgx-chart-alert' }, '!') : null),
         h('span', { className: 'rgx-chart-num' }, vm.ctxDisplay)),
-      h('span', { className: 'rgx-chart-pressure', 'aria-hidden': 'true' },
-        h('span', {
+      h('span', { className: ctxKnown ? 'rgx-chart-pressure' : 'rgx-chart-pressure is-unknown', 'aria-hidden': 'true' },
+        ctxKnown ? h('span', {
           className: 'rgx-chart-pressure-fill',
           style: { height: `${ctx}%` },
-        }),
+        }) : null,
         h('span', {
           className: 'rgx-chart-pressure-mark',
           style: { bottom: `${warnAt}%` },

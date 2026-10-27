@@ -40,13 +40,9 @@ await page.screenshot({
 });
 
 const spreads = page.locator('.spread');
-await spreads.nth(0).screenshot({ path: path.join(root, 'review/catalogue-bench.png') });
-await spreads.nth(1).screenshot({ path: path.join(root, 'review/catalogue-vu.png') });
-await spreads.nth(4).screenshot({ path: path.join(root, 'review/catalogue-chart.png') });
-await spreads.nth(2).screenshot({ path: path.join(root, 'review/catalogue-altimeter.png') });
-await spreads.nth(3).screenshot({ path: path.join(root, 'review/catalogue-signal.png') });
-await spreads.nth(5).screenshot({ path: path.join(root, 'review/catalogue-swiss.png') });
-await spreads.nth(6).screenshot({ path: path.join(root, 'review/catalogue-compass.png') });
+await spreads.nth(0).screenshot({ path: path.join(root, 'review/catalogue-vu.png') });
+await spreads.nth(1).screenshot({ path: path.join(root, 'review/catalogue-chart.png') });
+await spreads.nth(2).screenshot({ path: path.join(root, 'review/catalogue-swiss.png') });
 await page.locator('.closing').screenshot({ path: path.join(root, 'review/catalogue-closing.png') });
 
 console.log(JSON.stringify({ metrics, errors }, null, 2));
