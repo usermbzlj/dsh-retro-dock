@@ -51,28 +51,41 @@ export const DESIGN_BASE_CSS = String.raw`
   margin: 0 3px;
 }
 
+/* 灭灯是实心的淡色灯罩，不是空心圆圈；亮灯带一圈很浅的光晕 */
 .rg-gauge .rgx-lamp {
+  --lamp: #2f6b45;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   box-sizing: border-box;
-  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
-  background: transparent;
+  background: color-mix(in srgb, currentColor 18%, transparent);
+  transition: background .25s ease, box-shadow .25s ease;
 }
 
-.rg-gauge .rgx-lamps[data-level="ok"] .rgx-lamp[data-lamp="ok"] {
-  background: #2f6b45;
-  border-color: #2f6b45;
-}
+.rg-gauge .rgx-lamp[data-lamp="amber"] { --lamp: #b45309; }
+.rg-gauge .rgx-lamp[data-lamp="red"] { --lamp: var(--rg-caution-strong, #b45309); }
 
-.rg-gauge .rgx-lamps[data-level="amber"] .rgx-lamp[data-lamp="amber"] {
-  background: #b45309;
-  border-color: #b45309;
-}
+[data-ds-dark-theme] .rg-gauge .rgx-lamp[data-lamp="ok"] { --lamp: #4fb07a; }
+[data-ds-dark-theme] .rg-gauge .rgx-lamp[data-lamp="amber"] { --lamp: #e3a33b; }
 
+.rg-gauge .rgx-lamps[data-level="ok"] .rgx-lamp[data-lamp="ok"],
+.rg-gauge .rgx-lamps[data-level="amber"] .rgx-lamp[data-lamp="amber"],
 .rg-gauge .rgx-lamps[data-level="red"] .rgx-lamp[data-lamp="red"] {
-  background: var(--rg-caution-strong, #b45309);
-  border-color: var(--rg-caution-strong, #b45309);
+  background: var(--lamp);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lamp) 22%, transparent), 0 0 4px color-mix(in srgb, var(--lamp) 45%, transparent);
+}
+
+/* VU 的灯装在象牙表盘上，表盘不随宿主变暗，所以保持浅色主题的灯色 */
+.rg-gauge[data-style="vu"] .rgx-lamp[data-lamp="ok"] { --lamp: #2f6b45; }
+.rg-gauge[data-style="vu"] .rgx-lamp[data-lamp="amber"] { --lamp: #b45309; }
+
+/* 空闲保留均速：数字略退后，单位换成“均速”并点亮 */
+.rg-gauge[data-style]:not([data-style="classic"])[data-hold="1"] :is(.rgx-vu-digits, .rgx-chart-digits, .rgx-swiss-digits, .rgx-mini-digits, .rgx-drum) {
+  opacity: .78;
+}
+
+.rg-gauge[data-style]:not([data-style="classic"])[data-live="0"]:not([data-hold="1"]) :is(.rgx-vu-digits, .rgx-chart-digits, .rgx-swiss-digits, .rgx-mini-digits) {
+  opacity: .55;
 }
 
 .rg-gauge .rgx-mini-over,

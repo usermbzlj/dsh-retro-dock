@@ -168,6 +168,21 @@ export const SWISS_CSS = String.raw`
   transition: left .12s linear;
 }
 
+.rg-gauge[data-style="swiss"] .rgx-swiss-hold {
+  position: absolute;
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  box-sizing: border-box;
+  border: 1px solid var(--swiss-ink);
+  transition: left .5s cubic-bezier(.2, .7, .2, 1);
+}
+
+.rg-gauge[data-style="swiss"][data-hold="1"] .rgx-swiss-unit {
+  color: var(--swiss-ink);
+}
+
 .rg-gauge[data-style="swiss"][data-over="1"] .rgx-swiss-rate-cursor {
   background: var(--swiss-red);
 }
@@ -287,6 +302,7 @@ export const SWISS_CSS = String.raw`
 
 @media (prefers-reduced-motion: reduce) {
   .rg-gauge[data-style="swiss"] .rgx-swiss-rate-cursor,
+  .rg-gauge[data-style="swiss"] .rgx-swiss-hold,
   .rg-gauge[data-style="swiss"] .rgx-swiss-mini-cursor {
     transition: none;
   }

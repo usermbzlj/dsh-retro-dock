@@ -29,7 +29,7 @@ export const CLASSIC_CSS = String.raw`
   --rg-flag-size: 10px;
   display: inline-flex;
   align-items: center;
-  gap: calc(var(--rg-size) * 0.36);
+  gap: calc(var(--rg-size) * 0.3);
   height: calc(var(--rg-size) + 8px);
   margin: 0 12px 0 2px;
   padding: 0;
@@ -108,15 +108,39 @@ export const CLASSIC_CSS = String.raw`
   stroke-linecap: round;
 }
 
+/* 圆头描边在长度为 0 时会留下一个点：指针归零后让弧段淡出。
+ * 过速时沿弧加一圈随 --rg-over 增强的辉光。 */
 .rg-arc-rate {
   stroke: var(--rg-accent);
   stroke-dasharray: calc(var(--rg-p, 0) * 0.712) 107;
+  opacity: clamp(0, calc(var(--rg-p, 0) * 1.5), 1);
+  filter: drop-shadow(0 0 calc(var(--rg-over, 0) * 2.4px) var(--rg-accent));
 }
 
 .rg-ticks line {
   stroke: var(--rg-tick);
   stroke-width: .9;
   vector-effect: non-scaling-stroke;
+}
+
+.rg-ticks .rg-tick-minor {
+  stroke-width: .7;
+  opacity: .62;
+}
+
+/* 均速标记：量程环外的小三角，随均速变化平滑移动 */
+.rg-hold {
+  transform-origin: 20px 20px;
+  transform-box: view-box;
+  transition: transform .5s cubic-bezier(.2, .7, .2, 1);
+}
+
+.rg-hold polygon {
+  fill: color-mix(in srgb, var(--rg-accent) 70%, var(--rg-muted));
+}
+
+.rg-gauge[data-hold="1"] .rg-hold polygon {
+  fill: var(--rg-accent);
 }
 
 .rg-ticks .rg-tick-end {
@@ -136,15 +160,27 @@ export const CLASSIC_CSS = String.raw`
   will-change: transform;
 }
 
+/* 锥形针身 + 配重尾；轴帽是一粒强调色，像表芯的宝石轴承 */
 .rg-needle {
-  stroke: var(--rg-ink);
-  stroke-width: 1.4;
-  stroke-linecap: round;
-  filter: drop-shadow(0 0 1.5px color-mix(in srgb, var(--rg-ink) 26%, transparent));
+  fill: var(--rg-ink);
+  filter: drop-shadow(0 .4px .6px color-mix(in srgb, #000 30%, transparent));
+}
+
+.rg-needle-tail {
+  fill: var(--rg-ink);
+  opacity: .72;
 }
 
 .rg-hub {
   fill: var(--rg-ink);
+}
+
+.rg-hub-cap {
+  fill: var(--rg-accent);
+}
+
+.rg-gauge[data-live="0"] .rg-hub-cap {
+  fill: var(--rg-muted);
 }
 
 .rg-dial-minor .rg-track,
@@ -203,19 +239,24 @@ export const CLASSIC_CSS = String.raw`
   color: var(--rg-caution);
 }
 
+/* 读数右对齐：个位和单位的右缘固定，位数变化只向左长，不推动副表 */
 .rg-read {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: center;
   gap: 3px;
   line-height: 1;
 }
 
 .rg-value {
+  position: relative;
   display: inline-flex;
   align-items: baseline;
-  min-width: 0;
+  justify-content: flex-end;
+  /* 三位数字 + ≈ 槽位的宽度 */
+  min-width: calc(3ch + .6em);
+  transition: color .3s ease;
   font-family: inherit;
   font-size: var(--rg-value-size);
   font-weight: 600;
@@ -238,13 +279,30 @@ export const CLASSIC_CSS = String.raw`
 
 .rg-digits {
   display: inline-block;
-  min-width: 3ch;
-  text-align: left;
+  text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
+/* 空闲的 0 不该是整块仪表最亮的东西；保留的均速稍亮一档 */
+.rg-gauge[data-live="0"] .rg-value {
+  color: var(--rg-muted);
+}
+
+.rg-gauge[data-hold="1"] .rg-value {
+  color: color-mix(in srgb, var(--rg-ink) 78%, transparent);
+}
+
+.rg-gauge[data-hold="1"] .rg-unit {
+  color: var(--rg-accent);
+}
+
+/* 过速的 + 挂在个位右侧，不占读数宽度 */
 .rg-over-mark {
+  position: absolute;
+  left: 100%;
+  top: -.18em;
   margin-left: 1px;
+  font-size: .58em;
   color: var(--rg-caution-strong);
   font-weight: 700;
 }
@@ -276,6 +334,11 @@ export const CLASSIC_CSS = String.raw`
   font-weight: 500;
   letter-spacing: 0;
   color: var(--rg-muted);
+}
+
+/* HIT 标签带一点内环的青色，充当图例：哪一环是哪个读数一眼可辨 */
+.rg-row-hit .rg-tag {
+  color: color-mix(in srgb, var(--rg-hit) 72%, var(--rg-muted));
 }
 
 .rg-num {
@@ -398,7 +461,9 @@ export const CLASSIC_CSS = String.raw`
 .rg-gauge [hidden] { display: none !important; }
 
 @media (prefers-reduced-motion: reduce) {
-  .rg-gauge {
+  .rg-gauge,
+  .rg-gauge .rg-hold,
+  .rg-gauge .rg-value {
     transition: none;
   }
 }

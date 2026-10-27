@@ -165,15 +165,23 @@ export const createGauge = (variant) => function GaugeSlot(props) {
         ? `${t('calibration')} ×${calibration.factor.toFixed(2)} · ${t('samples', { n: calibration.samples })}`
         : t('notCalibrated');
 
-  const turnText = formatTurn(engine.getLastTurn(), t);
+  const lastTurn = engine.getLastTurn();
+  const turnText = formatTurn(lastTurn, t);
   const position = dialPosition(readout.tps, snapshot.scale);
+  // 均速：生成中是本轮的滚动均速，停下后是上一轮的结果
+  const avgTps = snapshot.hold && lastTurn && lastTurn.avgTps !== null ? lastTurn.avgTps : null;
+  // 指针归零之后，数字改为保留均速（指针仍然如实停在 0）
+  const holding = avgTps !== null && !readout.live && readout.tps <= 2;
+  const shownTps = holding ? Math.round(avgTps) : readout.tps;
   const vm = {
     style: snapshot.style,
     density,
     placement: variant,
     live: readout.live,
     tps: readout.tps,
-    displayTps: String(readout.tps),
+    displayTps: String(shownTps),
+    holding,
+    holdPosition: avgTps === null ? null : dialPosition(avgTps, snapshot.scale).position,
     readout: snapshot.readout,
     ctxLamps: snapshot.ctxLamps,
     position: position.position,

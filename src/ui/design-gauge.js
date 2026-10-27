@@ -52,7 +52,8 @@ export const DesignGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
   const titleParts = [];
   if (interactive) titleParts.push(action);
   if (vm.stale) titleParts.push(t('sourceUnavailable'));
-  titleParts.push(`${t('tipRate', { tps: vm.displayTps })} ${t('tipCtx', { ctx: vm.ctxDisplay })} ${t('tipHit', { hit: vm.hitDisplay })}`);
+  const rateTip = vm.holding ? t('tipHold', { tps: vm.displayTps }) : t('tipRate', { tps: vm.displayTps });
+  titleParts.push(`${rateTip} ${t('tipCtx', { ctx: vm.ctxDisplay })} ${t('tipHit', { hit: vm.hitDisplay })}`);
   if (vm.turnText) titleParts.push(vm.turnText);
   const metaParts = [t('scaleTooltip', { n: vm.scale }), t('warnAtTooltip', { n: vm.warnAt })];
   if (vm.calibrationText) metaParts.push(vm.calibrationText);
@@ -60,7 +61,7 @@ export const DesignGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
   titleParts.push(`${t('source')} ${sourceText}`);
 
   const ariaParts = [
-    t(vm.static ? 'ariaGaugeStatic' : 'ariaGaugeClassic', {
+    t(vm.holding ? 'ariaGaugeHold' : vm.static ? 'ariaGaugeStatic' : 'ariaGaugeClassic', {
       tps: vm.displayTps,
       ctx: vm.ctxKnown === false ? t('ctxUnknownAria') : vm.ctxDisplay,
       hit: vm.hitDisplay,
@@ -82,6 +83,7 @@ export const DesignGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
     className: 'rg-gauge rgx-gauge',
     'data-style': style,
     'data-live': vm.live ? '1' : '0',
+    'data-hold': vm.holding ? '1' : '0',
     'data-warn': vm.warn ? '1' : '0',
     'data-over': over ? '1' : '0',
     'data-stale': vm.stale ? '1' : '0',
@@ -146,8 +148,10 @@ export const DesignPreview = ({
   ctx = 65,
   readout = 'digits',
   ctxLamps = false,
+  hold = false,
   t,
 }) => h(DesignGauge, {
-  vm: createVm({ style, placement, density, scale, warnAt, sub, ctx, readout, ctxLamps }),
+  // 示例均速 121，与经典预览一致
+  vm: createVm({ style, placement, density, scale, warnAt, sub, ctx, readout, ctxLamps, avg: hold ? 121 : null }),
   t,
 });

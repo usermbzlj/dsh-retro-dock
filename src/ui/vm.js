@@ -39,13 +39,19 @@ export const createVm = ({
   calibrationText = '×1.12',
   readout = 'digits',
   ctxLamps = false,
+  avg = null,
 } = {}) => {
   const numericCtx = ctx === null || ctx === undefined || !Number.isFinite(Number(ctx)) ? null : Number(ctx);
   const numericHit = hit === null || hit === undefined || !Number.isFinite(Number(hit)) ? null : Number(hit);
   const position = dialPosition(tps, scale);
   const rounded = Math.round(Number(tps) || 0);
   const hitText = numericHit === null ? '—' : formatHitPercent(numericHit);
+  // avg：示例均速；tps 为 0 时读数保留均速，和实时槽位的行为一致
+  const hasAvg = avg !== null && Number.isFinite(Number(avg));
+  const holding = hasAvg && rounded <= 2;
   return {
+    holding,
+    holdPosition: hasAvg ? dialPosition(Number(avg), scale).position : null,
     style,
     placement,
     density,
@@ -56,7 +62,7 @@ export const createVm = ({
     source,
     live: typeof live === 'boolean' ? live : rounded > 2,
     tps: Number(tps) || 0,
-    displayTps: String(rounded),
+    displayTps: String(holding ? Math.round(Number(avg)) : rounded),
     ctxValue: numericCtx ?? 0,
     ctxKnown: numericCtx !== null,
     ctxText: numericCtx === null ? '—' : String(Math.round(numericCtx)),

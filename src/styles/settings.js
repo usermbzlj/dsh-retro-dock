@@ -238,6 +238,14 @@ export const SETTINGS_CSS = String.raw`
   max-width: 380px;
 }
 
+.rg-switch-row.is-disabled {
+  opacity: .55;
+}
+
+.rg-switch:disabled {
+  cursor: not-allowed;
+}
+
 .rg-switch-label {
   font-size: 12.5px;
   color: var(--dsw-alias-label-secondary);

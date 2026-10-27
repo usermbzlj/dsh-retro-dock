@@ -75,7 +75,10 @@ const Field = ({ label, hint, children }) => h('div', { className: 'rg-field' },
     hint ? h('span', { className: 'rg-field-hint' }, hint) : null),
   children);
 
-const Switch = ({ checked, onChange, label }) => h('div', { className: 'rg-switch-row' },
+// disabled：样式不支持该选项时整行变灰，按钮不可点
+const Switch = ({ checked, onChange, label, disabled = false }) => h('div', {
+  className: disabled ? 'rg-switch-row is-disabled' : 'rg-switch-row',
+},
   h('span', { className: 'rg-switch-label' }, label),
   h('button', {
     type: 'button',
@@ -83,6 +86,7 @@ const Switch = ({ checked, onChange, label }) => h('div', { className: 'rg-switc
     className: 'rg-switch',
     'aria-checked': String(checked),
     'aria-label': label,
+    disabled,
     onClick: () => onChange(!checked),
   }));
 
@@ -90,7 +94,7 @@ const styleName = (id, lang, t) => (
   id === 'classic' ? t('styleClassic') : DESIGN_META[id]?.name?.[lang] ?? id
 );
 
-const StyleOption = ({ id, selected, lang, t, onSelect, scale, warnAt, sub, readout, ctxLamps }) => {
+const StyleOption = ({ id, selected, lang, t, onSelect, scale, warnAt, sub, readout, ctxLamps, hold }) => {
   const Preview = id === 'classic' ? ClassicPreview : DesignPreview;
   return h('button', {
     type: 'button',
@@ -109,6 +113,7 @@ const StyleOption = ({ id, selected, lang, t, onSelect, scale, warnAt, sub, read
       sub,
       readout,
       ctxLamps,
+      hold,
       t,
     })),
   h('span', { className: 'rg-style-copy' },
@@ -116,7 +121,7 @@ const StyleOption = ({ id, selected, lang, t, onSelect, scale, warnAt, sub, read
     selected ? h('span', { className: 'rg-style-inuse' }, t('styleInUse')) : null));
 };
 
-const StylePicker = ({ value, lang, t, onChange, scale, warnAt, sub, readout, ctxLamps }) => h('div', {
+const StylePicker = ({ value, lang, t, onChange, scale, warnAt, sub, readout, ctxLamps, hold }) => h('div', {
   className: 'rg-style-grid',
   role: 'group',
   'aria-label': t('styleTitle'),
@@ -132,6 +137,7 @@ const StylePicker = ({ value, lang, t, onChange, scale, warnAt, sub, readout, ct
   sub,
   readout,
   ctxLamps,
+  hold,
 })));
 
 /**
@@ -183,7 +189,14 @@ export const SettingsControls = ({ t, lang }) => {
         sub: snapshot.sub,
         readout: snapshot.readout,
         ctxLamps: snapshot.ctxLamps,
+        hold: snapshot.hold,
         onChange: (style) => set({ style }),
+      })),
+    h(Field, { label: t('holdTitle'), hint: t('holdHint') },
+      h(Switch, {
+        checked: snapshot.hold,
+        label: t('holdSwitch'),
+        onChange: (hold) => set({ hold }),
       })),
     h(Field, { label: t('readoutTitle'), hint: panel ? t('readoutHint') : t('panelOnlyHint') },
       h(Seg, {
@@ -200,7 +213,8 @@ export const SettingsControls = ({ t, lang }) => {
       h(Switch, {
         checked: snapshot.ctxLamps,
         label: t('ctxLampsSwitch'),
-        onChange: (ctxLamps) => panel && set({ ctxLamps }),
+        disabled: !panel,
+        onChange: (ctxLamps) => set({ ctxLamps }),
       })),
     h(Field, { label: t('placementTitle') },
       h(Seg, {
@@ -324,6 +338,7 @@ export const SettingsSection = () => {
         sub: snapshot.sub,
         readout: snapshot.readout,
         ctxLamps: snapshot.ctxLamps,
+        hold: snapshot.hold,
         t,
       })));
 

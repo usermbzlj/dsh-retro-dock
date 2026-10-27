@@ -23,6 +23,11 @@ export const SwissBody = ({ vm, t }) => {
       className: pct === 100 ? 'rgx-swiss-tick is-end' : pct === 0 ? 'rgx-swiss-tick is-start' : 'rgx-swiss-tick',
       style: { left: `${pct}%` },
     })),
+    // 均速标记：空心方块，和实心游标同尺寸
+    vm.holdPosition !== null && vm.holdPosition !== undefined ? h('span', {
+      className: 'rgx-swiss-hold',
+      style: { left: `${clampPct(vm.holdPosition)}%` },
+    }) : null,
     h('span', {
       className: 'rgx-swiss-rate-cursor',
       // left 百分比相对整根尺子；居中偏移由 CSS 的 margin-left 负责
@@ -55,7 +60,7 @@ export const SwissBody = ({ vm, t }) => {
     h('span', { className: 'rgx-swiss-main' },
       h(Approx, { live: vm.live }),
       h('span', { className: 'rgx-swiss-digits' }, vm.displayTps),
-      h('span', { className: 'rgx-swiss-unit' }, t('unit')),
+      h('span', { className: 'rgx-swiss-unit' }, t(vm.holding ? 'holdUnit' : 'unit')),
       h('span', { className: 'rgx-swiss-over', 'aria-hidden': 'true' }, '+')),
     rateRule,
     sub);

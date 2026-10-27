@@ -23,6 +23,7 @@ export const VuBody = ({ vm, t }) => {
   const showSub = vm.sub !== false;
   // 统计条太矮，刻度字读不出来，只留刻线和红区；输入位只印 0 / 中点 / 满量程，避免挤在弧上
   const labels = vm.placement === 'dock' ? [] : [0, Math.round(scale / 2), scale];
+  const holdKnown = vm.holdPosition !== null && vm.holdPosition !== undefined;
 
   const scaleSvg = h('svg', {
     className: 'rgx-vu-scale rgx-mechanism',
@@ -49,6 +50,11 @@ export const VuBody = ({ vm, t }) => {
         dominantBaseline: 'middle',
       }, String(value));
     })),
+  // 均速标记：刻度弧外的小三角，和真 VU 表的峰值保持针一个意思
+  holdKnown ? h('g', {
+    className: 'rgx-vu-hold',
+    style: { transform: `rotate(${(212 + clampPct(vm.holdPosition) * 1.16).toFixed(2)}deg)` },
+  }, h('polygon', { points: '91,33 93.2,32 93.2,34' })) : null,
   h('g', { className: 'rgx-vu-needle' },
     h('polygon', { className: 'rgx-vu-needle-tail', points: '49.8,32.2 60,31.8 60,34.2 49.8,33.8' }),
     h('polygon', { className: 'rgx-vu-needle-blade', points: '60,31.9 88.2,32.94 88.2,33.06 60,34.1' })),
@@ -69,7 +75,7 @@ export const VuBody = ({ vm, t }) => {
       (Number(vm.over) || 0) > 0
         ? h('span', { className: 'rgx-vu-over', 'aria-hidden': 'true' }, '+')
         : null,
-      h('span', { className: 'rgx-vu-unit' }, t('unit'))),
+      h('span', { className: 'rgx-vu-unit' }, t(vm.holding ? 'holdUnit' : 'unit'))),
     showSub ? h('span', { className: 'rgx-vu-side is-right' },
       h('span', { className: 'rgx-vu-tag' }, t('hit')),
       h('span', { className: 'rgx-vu-val' }, vm.hitDisplay)) : null);

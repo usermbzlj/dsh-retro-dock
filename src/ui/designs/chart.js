@@ -103,7 +103,7 @@ export const ChartBody = ({ vm, t }) => {
         h('span', { className: 'rgx-chart-value' },
           h(Approx, { live: vm.live }),
           h('span', { className: 'rgx-chart-digits' }, vm.displayTps),
-          h('span', { className: 'rgx-chart-unit' }, t('unit')),
+          h('span', { className: 'rgx-chart-unit' }, t(vm.holding ? 'holdUnit' : 'unit')),
           h('span', { className: 'rgx-chart-over', 'aria-hidden': 'true' }, '+')),
           h('span', { className: 'rgx-chart-span', 'aria-hidden': 'true' })),
       h('span', { className: 'rgx-chart-plot rgx-mechanism' },

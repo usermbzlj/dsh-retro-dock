@@ -167,6 +167,25 @@ export const VU_CSS = String.raw`
   will-change: transform;
 }
 
+.rg-gauge[data-style="vu"] .rgx-vu-hold {
+  transform-origin: 60px 33px;
+  transform-box: view-box;
+  transition: transform .5s cubic-bezier(.2, .7, .2, 1);
+}
+
+.rg-gauge[data-style="vu"] .rgx-vu-hold polygon {
+  fill: var(--vu-ink);
+  opacity: .55;
+}
+
+.rg-gauge[data-style="vu"][data-hold="1"] .rgx-vu-hold polygon {
+  opacity: .9;
+}
+
+.rg-gauge[data-style="vu"][data-hold="1"] .rgx-vu-unit {
+  color: var(--vu-ink);
+}
+
 .rg-gauge[data-style="vu"] .rgx-vu-needle-blade {
   fill: var(--vu-ink);
 }

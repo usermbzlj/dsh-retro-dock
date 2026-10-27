@@ -122,7 +122,7 @@ export const MiniLine = ({ vm, t }) => {
       (Number(vm.over) || 0) > 0
         ? h('span', { className: 'rgx-mini-over', 'aria-hidden': 'true' }, '+')
         : null,
-      h('span', { className: 'rgx-mini-unit' }, t('unit'))),
+      h('span', { className: 'rgx-mini-unit' }, t(vm.holding ? 'holdUnit' : 'unit'))),
     showSub ? h('span', { className: vm.warn ? 'rgx-mini-ctx is-warn' : 'rgx-mini-ctx' },
       vm.warn ? h('span', { className: 'rgx-mini-alert', 'aria-hidden': 'true' }, '!') : null,
       h('span', { className: 'rgx-mini-tag' }, t('ctx')),

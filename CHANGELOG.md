@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.7.0 — 2026-10-27
+
+### Added
+
+- **Idle hold.** When generation stops, the number keeps the last turn's average speed and the unit reads 均速 / `avg`; the needle still drops to zero. On by default; turn it off under Settings → 空闲读数 (`hold` in `prefs:v3`).
+- **Turn-average marker.** A small triangle outside the scale marks the current turn's running average, or the last turn's once idle. Classic and VU draw a triangle; Swiss draws a hollow square on the rule. It glides to its new position (no motion when reduced motion is on).
+
+### Changed
+
+- Classic dial: tapered needle with a counterweight tail and an accent pivot cap (muted when idle); 12 minor ticks between the four majors; the over-range glow that the README described now exists (`--rg-over` drives a drop-shadow on the rate arc).
+- Classic readout is right-aligned: the units digit and `tok/s` share a fixed right edge, so a growing number extends left instead of pushing the sub dial. The over-range `+` is a superscript that takes no width. An idle `0` is muted instead of being the brightest thing on the gauge.
+- CTX shows `%` like HIT. The HIT label is tinted teal so it doubles as a legend for the inner ring.
+- Lamps: unlit lamps are solid, faint lenses instead of outline rings; lit lamps get a soft halo, with brighter green and amber in the dark theme (VU keeps its light-face colours).
+- Settings: the context-lamps switch is visibly disabled on Chart and Swiss, where it does nothing.
+- README, README.en and package summary describe the four looks that ship; specimen sheets are regenerated for 1.7.0 with a four-look strip. The stale seven-style hero is no longer referenced or packed.
+
+### Fixed
+
+- A blue dot sat at the start of the classic speed arc at 0 tok/s (a zero-length round line cap). The arc now fades out as the needle reaches zero.
+
 ## 1.6.1 — 2026-10-27
 
 ### Fixed

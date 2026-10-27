@@ -24,6 +24,8 @@ export const DEFAULT_PREFS = Object.freeze({
   lang: 'auto',
   readout: 'digits',
   ctxLamps: false,
+  // 空闲时读数保留上一轮均速，表盘上留一个均速标记
+  hold: true,
 });
 
 /**
@@ -95,5 +97,6 @@ export const normalizePrefs = (raw) => {
     lang: LANGUAGES.includes(value.lang) ? value.lang : DEFAULT_PREFS.lang,
     readout: READOUTS.includes(value.readout) ? value.readout : DEFAULT_PREFS.readout,
     ctxLamps: typeof value.ctxLamps === 'boolean' ? value.ctxLamps : DEFAULT_PREFS.ctxLamps,
+    hold: typeof value.hold === 'boolean' ? value.hold : DEFAULT_PREFS.hold,
   };
 };

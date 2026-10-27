@@ -39,21 +39,35 @@ const arcPath = (from, to, radius = 17) => {
   return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} A ${radius} ${radius} 0 ${large} 1 ${end.x.toFixed(2)} ${end.y.toFixed(2)}`;
 };
 
-const ticks = (scale) => {
-  const values = [0, scale / 3, (scale * 2) / 3, scale];
-  return values.map((value, index) => {
-    const angle = ((150 + (value / scale) * 240) * Math.PI) / 180;
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
-    return h('line', {
-      key: value,
-      className: index === values.length - 1 ? 'rg-tick-end' : undefined,
-      x1: 20 + 14.2 * cos,
-      y1: 20 + 14.2 * sin,
-      x2: 20 + 17 * cos,
-      y2: 20 + 17 * sin,
-    });
+// 刻度：12 等分，每 4 格一根主刻度（0 / ⅓ / ⅔ / 满量程），其余是贴着外缘的短副刻度
+const ticks = () => Array.from({ length: 13 }, (_, index) => {
+  const angle = ((150 + (index / 12) * 240) * Math.PI) / 180;
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const major = index % 4 === 0;
+  const inner = major ? 14.2 : 15.7;
+  return h('line', {
+    key: index,
+    className: index === 12 ? 'rg-tick-end' : major ? undefined : 'rg-tick-minor',
+    x1: 20 + inner * cos,
+    y1: 20 + inner * sin,
+    x2: 20 + 17 * cos,
+    y2: 20 + 17 * sin,
   });
+});
+
+/**
+ * 均速标记：量程环外侧一个指向圆心的小三角。整组按角度旋转，
+ * 这样位置变化可以用 CSS transition 平滑过去。
+ *
+ * @param {number|null|undefined} position 0–100
+ */
+const holdMark = (position) => {
+  if (position === null || position === undefined || !Number.isFinite(Number(position))) return null;
+  return h('g', {
+    className: 'rg-hold',
+    style: { transform: `rotate(${(150 + clampPct(position) * 2.4).toFixed(2)}deg)` },
+  }, h('polygon', { points: '38.7,20 40.9,18.9 40.9,21.1' }));
 };
 
 const sourceKey = (source) => (
@@ -119,7 +133,8 @@ export const ClassicGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
   const titleParts = [];
   if (!vm.static) titleParts.push(action);
   if (vm.stale) titleParts.push(t('sourceUnavailable'));
-  titleParts.push(`${t('tipRate', { tps: vm.displayTps })} ${t('tipCtx', { ctx: vm.ctxDisplay })} ${t('tipHit', { hit: vm.hitDisplay })}`);
+  const rateTip = vm.holding ? t('tipHold', { tps: vm.displayTps }) : t('tipRate', { tps: vm.displayTps });
+  titleParts.push(`${rateTip} ${t('tipCtx', { ctx: vm.ctxDisplay })} ${t('tipHit', { hit: vm.hitDisplay })}`);
   if (vm.turnText) titleParts.push(vm.turnText);
   const metaParts = [t('scaleTooltip', { n: scale }), t('warnAtTooltip', { n: warnAt })];
   if (vm.calibrationText) metaParts.push(vm.calibrationText);
@@ -128,7 +143,7 @@ export const ClassicGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
   const title = titleParts.join('\n');
 
   const ariaParts = [
-    t(vm.static ? 'ariaGaugeStatic' : 'ariaGaugeClassic', {
+    t(vm.holding ? 'ariaGaugeHold' : vm.static ? 'ariaGaugeStatic' : 'ariaGaugeClassic', {
       tps: vm.displayTps,
       ctx: ctxKnown ? vm.ctxDisplay : t('ctxUnknownAria'),
       hit: vm.hitDisplay,
@@ -153,6 +168,7 @@ export const ClassicGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
     ref: rootRef,
     className: 'rg-gauge',
     'data-live': vm.live ? '1' : '0',
+    'data-hold': vm.holding ? '1' : '0',
     'data-warn': vm.warn ? '1' : '0',
     'data-over': over ? '1' : '0',
     'data-stale': vm.stale ? '1' : '0',
@@ -189,10 +205,14 @@ export const ClassicGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
         className: 'rg-arc rg-arc-rate', cx: 20, cy: 20, r: 17,
         transform: 'rotate(150 20 20)',
       }),
-      h('g', { className: 'rg-ticks' }, ticks(scale)),
+      h('g', { className: 'rg-ticks' }, ticks()),
+      holdMark(vm.holdPosition),
+      // 指针朝 +x 画，整组按 --rg-p 旋转：锥形针身 + 一小段配重尾
       h('g', { className: 'rg-needle-group' },
-        h('line', { className: 'rg-needle', x1: 20, y1: 20, x2: 33, y2: 20 })),
-      h('circle', { className: 'rg-hub', cx: 20, cy: 20, r: 1.6 })),
+        h('polygon', { className: 'rg-needle-tail', points: '20,19.25 16.4,19.55 16.4,20.45 20,20.75' }),
+        h('polygon', { className: 'rg-needle', points: '20,19.1 33.4,19.86 33.4,20.14 20,20.9' })),
+      h('circle', { className: 'rg-hub', cx: 20, cy: 20, r: 2.05 }),
+      h('circle', { className: 'rg-hub-cap', cx: 20, cy: 20, r: 0.8 })),
     h('span', { className: 'rg-read' },
       h('span', { className: 'rg-value' },
         h('span', { className: 'rg-approx', 'aria-hidden': 'true' }, vm.live ? '≈' : '\u00A0'),
@@ -200,7 +220,7 @@ export const ClassicGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
           ? h(Drum, { value: vm.displayTps })
           : h('span', { className: 'rg-digits' }, vm.displayTps),
         over ? h('span', { className: 'rg-over-mark', 'aria-hidden': 'true' }, '+') : null),
-      h('span', { className: 'rg-unit' }, t('unit')))),
+      h('span', { className: 'rg-unit' }, t(vm.holding ? 'holdUnit' : 'unit')))),
   h('span', { className: 'rg-module rg-module-minor', hidden: !showSub },
     h('svg', { className: 'rg-dial rg-dial-minor', viewBox: '0 0 40 40', 'aria-hidden': 'true' },
       h('circle', {
@@ -233,8 +253,8 @@ export const ClassicGauge = ({ vm, t, rootRef = null, onToggle = null }) => {
           t('ctx'),
           vm.warn ? h('span', { className: 'rg-alert', 'aria-hidden': 'true' }, '!') : null),
         vm.ctxLamps ? h(Lamps, { vm }) : null,
-        h('span', { className: 'rg-num' }, vm.ctxText)),
-      h('span', { className: 'rg-row' },
+        h('span', { className: 'rg-num' }, vm.ctxDisplay)),
+      h('span', { className: 'rg-row rg-row-hit' },
         h('span', { className: 'rg-tag' }, t('hit')),
         h('span', { className: 'rg-num' }, vm.hitDisplay)))),
   h('span', { className: 'rg-meta', hidden: !showSub },
@@ -282,15 +302,21 @@ export const createClassicVm = ({
   source = 'projection',
   readout = 'digits',
   ctxLamps = false,
+  avg = null,
 } = {}) => {
   const numericCtx = ctx === null || ctx === undefined || !Number.isFinite(Number(ctx)) ? null : Number(ctx);
   const hitText = formatHitPercent(hit);
   const position = dialPosition(tps, scale);
+  // avg：示例的本轮均速；tps 为 0 时就是“停下后保留均速”的样子
+  const hasAvg = Number.isFinite(Number(avg)) && avg !== null;
+  const holding = hasAvg && tps <= 2;
   return {
     placement,
     density,
     live: tps > 2,
-    displayTps: String(Math.round(tps)),
+    displayTps: String(Math.round(holding ? avg : tps)),
+    holding,
+    holdPosition: hasAvg ? dialPosition(Number(avg), scale).position : null,
     ctxValue: numericCtx ?? 0,
     ctxKnown: numericCtx !== null,
     ctxText: numericCtx === null ? '—' : String(Math.round(numericCtx)),
@@ -332,8 +358,10 @@ export const ClassicPreview = ({
   ctx = 65,
   readout = 'digits',
   ctxLamps = false,
+  hold = false,
   t,
 }) => h(ClassicGauge, {
-  vm: createClassicVm({ placement, density, scale, warnAt, sub, ctx, readout, ctxLamps }),
+  // 预览里示例均速取 121，比示例瞬时值 142 低一些，标记和指针能分开看
+  vm: createClassicVm({ placement, density, scale, warnAt, sub, ctx, readout, ctxLamps, avg: hold ? 121 : null }),
   t,
 });

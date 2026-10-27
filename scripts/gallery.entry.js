@@ -12,6 +12,8 @@ import { CSS } from '../src/styles/index.js';
 import { createT } from '../src/i18n.js';
 import { prefs } from '../src/prefs.js';
 import { ClassicGauge, createClassicVm } from '../src/ui/classic.js';
+import { DesignGauge } from '../src/ui/design-gauge.js';
+import { createVm } from '../src/ui/vm.js';
 import { SettingsSection } from '../src/ui/settings.js';
 import { VERSION } from '../src/version.js';
 
@@ -267,6 +269,48 @@ body[data-static="1"] * { animation: none !important; }
   font-weight: 600;
 }
 
+/* 四种外观：一行四格，每格同一组示例读数 */
+.looks {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 0;
+  border-bottom: .5px solid var(--gal-hair);
+}
+
+.look {
+  margin: 0;
+  min-width: 0;
+  padding: 18px 16px 15px;
+  border-left: .5px solid var(--gal-hair);
+}
+
+.look:first-child { border-left: 0; }
+
+.look-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 84px;
+}
+
+.look-stage .rg-gauge { margin: 0; }
+
+.look figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 10px;
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--gal-muted);
+}
+
+.look figcaption b {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--gal-text);
+}
+
 .sheet-foot {
   display: flex;
   justify-content: space-between;
@@ -310,6 +354,8 @@ body[data-static="1"] * { animation: none !important; }
   .state:nth-child(2n + 1) { border-left: 0; }
   .state:nth-child(n + 5) { border-bottom: 0; }
   .sheet-brand p { display: none; }
+  .looks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .look:nth-child(3) { border-left: 0; }
 }
 
 @media (max-width: 620px) {
@@ -336,13 +382,14 @@ const makeGauge = ({
   sub = true,
   source = 'projection',
   stale = false,
+  avg = null,
 } = {}) => React.createElement(ClassicGauge, {
-  vm: createClassicVm({ placement, density, tps, ctx, hit, scale, warnAt, sub, source, stale }),
+  vm: createClassicVm({ placement, density, tps, ctx, hit, scale, warnAt, sub, source, stale, avg }),
   t,
 });
 
 const Composer = () => React.createElement('div', { className: 'composer' },
-  React.createElement('div', { className: 'input-slot' }, makeGauge({ placement: 'input', density: 'full' })),
+  React.createElement('div', { className: 'input-slot' }, makeGauge({ placement: 'input', density: 'full', avg: 121 })),
   React.createElement('div', { className: 'prompt-row' },
     React.createElement('span', { className: 'prompt' },
       lang === 'en' ? 'Type your message…' : '输入你的问题…')),
@@ -358,8 +405,15 @@ const STATES = [
     key: 'live',
     label: lang === 'en' ? 'Live' : '实时',
     meta: '142 tok/s',
-    note: lang === 'en' ? '≈ estimate · calibration ×1.12' : '≈ 估算 · 校准 ×1.12',
-    gauge: { tps: 142, ctx: 65, hit: 99.94 },
+    note: lang === 'en' ? 'The triangle marks this turn’s running average' : '小三角是本轮的滚动均速',
+    gauge: { tps: 142, ctx: 65, hit: 99.94, avg: 121 },
+  },
+  {
+    key: 'hold',
+    label: lang === 'en' ? 'Idle' : '空闲',
+    meta: lang === 'en' ? 'avg 118' : '均速 118',
+    note: lang === 'en' ? 'Needle rests at 0; the number keeps the last turn' : '指针归零，数字保留上一轮均速',
+    gauge: { tps: 0, ctx: 65, hit: 99.94, avg: 118 },
   },
   {
     key: 'warn',
@@ -391,6 +445,14 @@ const STATES = [
   },
 ];
 
+// 四种外观同读一组数据；文案说明各自适合什么场景
+const LOOKS = [
+  { id: 'classic', name: lang === 'en' ? 'Classic' : '经典', note: lang === 'en' ? 'Default · all three readings at a glance' : '默认 · 三个读数一眼看全' },
+  { id: 'vu', name: lang === 'en' ? 'Broadcast VU' : '广播 VU', note: lang === 'en' ? 'A lit ivory face with a weighted needle' : '暖色象牙表盘，指针有质量感' },
+  { id: 'chart', name: lang === 'en' ? 'Chart' : '记录纸', note: lang === 'en' ? 'A 20-second trace; spot slowdowns' : '20 秒走纸，看得出掉速' },
+  { id: 'swiss', name: lang === 'en' ? 'Swiss' : '瑞士尺', note: lang === 'en' ? 'Type and hairlines; the quietest' : '只有字和发丝线，最安静' },
+];
+
 const StateCell = ({ state }) => React.createElement('div', { className: 'state', key: state.key },
   React.createElement('div', { className: 'state-kicker' }, state.label, React.createElement('span', null, state.meta)),
   React.createElement('div', { className: 'state-gauge' }, makeGauge({ placement: 'dock', density: 'full', ...state.gauge })),
@@ -400,21 +462,27 @@ const Gallery = () => React.createElement('main', { className: 'sheet' },
   React.createElement('header', { className: 'sheet-head' },
     React.createElement('div', { className: 'sheet-brand' },
       React.createElement('h1', null, 'Retro Dock'),
-      React.createElement('p', null, lang === 'en' ? 'Dual-dial composer instrument' : '输入区双表盘仪表')),
+      React.createElement('p', null, lang === 'en' ? 'A live speed meter for the DeepSeek composer' : '给 DeepSeek 输入框装一块实时速度表')),
     React.createElement('span', { className: 'sheet-version' }, `v${VERSION}`)),
   React.createElement('section', { className: 'hero' },
     React.createElement('div', { className: 'hero-caption' },
-      React.createElement('span', null, lang === 'en' ? 'Input placement · 56px dial · actual size' : '输入框上方 · 56px 表盘 · 实际尺寸'),
+      React.createElement('span', null, lang === 'en' ? 'Above the composer · 64px dial · actual size' : '输入框上方 · 64px 表盘 · 实际尺寸'),
       React.createElement('span', null, lang === 'en' ? 'Click the gauge to move it to the stats bar' : '点击仪表可移到统计条')),
     React.createElement(Composer)),
   React.createElement('section', { className: 'state-matrix', 'aria-label': lang === 'en' ? 'Instrument states' : '仪表状态' },
-    STATES.map((state) => React.createElement(StateCell, { key: state.key, state })),
-    React.createElement('div', { className: 'state state-specimen-note' },
-      React.createElement('b', null, lang === 'en' ? 'Actual-size specimens' : '实际尺寸样张'),
-      React.createElement('span', null,
-        lang === 'en'
-          ? 'Rendered with the shipped CSS at 42px dock / 56px input. No mockup dials, no enlarged numbers.'
-          : '使用线上 CSS 的 42px 统计条 / 56px 输入区尺寸；没有放大的样张表盘。'))),
+    STATES.map((state) => React.createElement(StateCell, { key: state.key, state }))),
+  React.createElement('section', { className: 'looks', 'aria-label': lang === 'en' ? 'Four looks' : '四种外观' },
+    LOOKS.map((look) => React.createElement('figure', { className: 'look', key: look.id },
+      React.createElement('div', { className: 'look-stage' },
+        look.id === 'classic'
+          ? makeGauge({ placement: 'input', density: 'full', avg: 121 })
+          : React.createElement(DesignGauge, {
+            vm: createVm({ style: look.id, placement: 'input', density: 'full', avg: 121 }),
+            t,
+          })),
+      React.createElement('figcaption', null,
+        React.createElement('b', null, look.name),
+        React.createElement('span', null, look.note))))),
   React.createElement('footer', { className: 'sheet-foot' },
     React.createElement('span', null,
       React.createElement('b', null, lang === 'en' ? 'Rate' : '速率'),

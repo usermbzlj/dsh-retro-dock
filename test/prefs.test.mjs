@@ -107,6 +107,17 @@ test('unknown or out-of-range values fall back safely', () => {
   assert.equal(snapshot.lang, DEFAULT_PREFS.lang);
 });
 
+test('the idle hold defaults on, persists off, and rejects non-booleans', () => {
+  const storage = new MemoryStorage();
+  assert.equal(createPrefs({ storage }).getSnapshot().hold, true);
+  createPrefs({ storage }).set({ hold: false });
+  assert.equal(createPrefs({ storage }).getSnapshot().hold, false);
+
+  const bad = new MemoryStorage();
+  bad.setItem(PREFS_KEY, JSON.stringify({ hold: 'yes' }));
+  assert.equal(createPrefs({ storage: bad }).getSnapshot().hold, true);
+});
+
 test('the old placement key migrates once and is removed', () => {
   const storage = new MemoryStorage();
   storage.setItem(LEGACY_PLACEMENT_KEY, 'input');

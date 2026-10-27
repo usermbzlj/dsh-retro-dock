@@ -30,6 +30,7 @@ const samePrefs = (left, right) => (
   && left.lang === right.lang
   && left.readout === right.readout
   && left.ctxLamps === right.ctxLamps
+  && left.hold === right.hold
 );
 
 /**

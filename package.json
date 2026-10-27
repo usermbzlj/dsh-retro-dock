@@ -1,9 +1,9 @@
 {
   "name": "@local/retro-dock",
-  "version": "1.6.1",
+  "version": "1.7.0",
   "private": true,
   "type": "module",
-  "description": "Theme-aware classic dual-dial instrument for DeepSeek Harness, plus VU, chart and Swiss looks: live tokens/sec, context pressure and cache hit with calibrated measurement.",
+  "description": "A live speed meter for the DeepSeek Harness composer: tokens/sec on a real needle dial, context pressure and cache hit, with the last turn's average held when idle. Classic, VU, chart and Swiss looks.",
   "scripts": {
     "build": "node scripts/build.mjs",
     "test": "node --test",
@@ -31,8 +31,7 @@
     "MEASUREMENT.md",
     "docs/classic-*.jpg",
     "docs/settings-*.jpg",
-    "docs/seven-designs.md",
-    "docs/seven-languages-hero.jpg"
+    "docs/seven-designs.md"
   ],
   "dsh": {
     "bundle": {
@@ -59,7 +58,7 @@
   "dshhub": {
     "schemaVersion": 1,
     "displayName": "Retro Dock — Composer Instrument Dials",
-    "summary": "Classic dual-dial instrument plus seven selectable measuring languages: live tokens per second, calibrated against host stats, with CTX redlines, cache hit and visible data-source states.",
+    "summary": "See how fast DeepSeek is writing, right above the composer: a needle dial for tokens per second (calibrated against host stats), context pressure with a redline, cache hit, and the last turn's average held when idle. Four looks: classic, broadcast VU, chart, Swiss.",
     "categories": [
       "Web UI",
       "观测"

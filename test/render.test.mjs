@@ -30,8 +30,37 @@ test('the classic gauge renders the main dial, sub dial and readouts', () => {
   assert.match(html, /rg-arc-hit/);
   assert.match(html, /class="rg-approx"[^>]*>≈</);
   assert.match(html, /class="rg-digits"[^>]*>142</);
-  assert.match(html, />65</);
+  assert.match(html, />65%</);
   assert.match(html, />99\.9%</);
+});
+
+test('an idle gauge holds the last turn average and marks it on the scale', () => {
+  const html = render(createClassicVm({ tps: 0, avg: 118 }));
+  assert.match(html, /data-hold="1"/);
+  assert.match(html, /class="rg-digits"[^>]*>118</);
+  assert.match(html, />均速</);
+  assert.match(html, /class="rg-hold"/);
+  assert.match(html, /上一轮平均 118 tok\/s/);
+
+  const live = render(createClassicVm({ tps: 142, avg: 121 }));
+  assert.match(live, /data-hold="0"/);
+  assert.match(live, /class="rg-digits"[^>]*>142</);
+  assert.match(live, /class="rg-hold"/);
+
+  const none = render(createClassicVm({ tps: 0 }));
+  assert.doesNotMatch(none, /rg-hold/);
+  assert.match(none, />0</);
+});
+
+test('the hold marker appears on VU and Swiss, and every look relabels the unit', () => {
+  assert.match(designRender('vu', { tps: 0, avg: 118 }), /rgx-vu-hold/);
+  assert.match(designRender('swiss', { tps: 0, avg: 118 }), /rgx-swiss-hold/);
+  for (const style of DESIGN_IDS) {
+    const html = designRender(style, { tps: 0, avg: 118 });
+    assert.match(html, /data-hold="1"/, style);
+    assert.match(html, />118</, style);
+    assert.match(html, />均速</, style);
+  }
 });
 
 test('minimal density folds CTX and HIT into one line', () => {
